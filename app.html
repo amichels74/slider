@@ -631,22 +631,29 @@ async function excluirJogo(id) {
 
 async function carregarAtletasJogo() {
   const camp = document.getElementById('j-camp').value;
-  if (!camp) return;
+  if (!camp && !mesFerias) return;
   selAvulsas.clear();
   document.getElementById('j-lista-avulsas').innerHTML = '<div class="loading">Carregando...</div>';
-  const data = await api('atletas.php?camp='+camp);
-  atletasJogo = data || [];
-  const ausentes = atletasJogo.filter(a=>a.status==='ausente');
-  const infoEl = document.getElementById('j-info-ausentes');
-  if (ausentes.length && !mesFerias) { infoEl.innerHTML=`<strong>${ausentes.length} ausente(s):</strong> `+ausentes.map(a=>a.nome).join(', '); infoEl.style.display=''; }
-  else infoEl.style.display='none';
 
   if (mesFerias) {
-    // Férias: show all active athletes (mensalistas + avulsas)
-    const todas = atletasJogo.filter(a=>a.status==='ativa');
+    // Férias: busca TODAS as atletas do sistema (sem filtro de campeonato)
+    const todasData = await api('atletas.php') || [];
+    // Deduplica por id, mantém atletas ativas de qualquer campeonato
+    const idsVistas = new Set();
+    const todas = [];
+    todasData.forEach(a => {
+      if (idsVistas.has(a.id)) return;
+      idsVistas.add(a.id);
+      const inscricoes = a.inscricoes || [];
+      const temAtiva = inscricoes.some(i => i.status === 'ativa');
+      const tipoInsc = inscricoes.find(i => i.status === 'ativa');
+      if (temAtiva) todas.push({ ...a, tipo: tipoInsc ? tipoInsc.tipo : (a.tipo || 'mensalista'), status: 'ativa' });
+    });
+    todas.sort((a, b) => a.nome.localeCompare(b.nome));
+    document.getElementById('j-info-ausentes').style.display = 'none';
     document.getElementById('j-lista-avulsas').innerHTML = todas.length === 0
-      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta ativa neste campeonato.</div>'
-      : todas.map(a=>{
+      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta ativa no sistema.</div>'
+      : todas.map(a => {
           const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
           const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
           const tipoLabel = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
@@ -657,7 +664,18 @@ async function carregarAtletasJogo() {
             <div class="chk" id="chk-${a.id}"></div>
           </div>`;
         }).join('');
-  } else {
+    return;
+  }
+
+  // Modo normal: só avulsas do campeonato selecionado
+  const data = await api('atletas.php?camp='+camp);
+  atletasJogo = data || [];
+  const ausentes = atletasJogo.filter(a=>a.status==='ausente');
+  const infoEl = document.getElementById('j-info-ausentes');
+  if (ausentes.length) { infoEl.innerHTML=`<strong>${ausentes.length} ausente(s):</strong> `+ausentes.map(a=>a.nome).join(', '); infoEl.style.display=''; }
+  else infoEl.style.display='none';
+
+  {
     const avulsas = atletasJogo.filter(a=>a.tipo==='avulsa' && a.status==='ativa');
     document.getElementById('j-lista-avulsas').innerHTML = avulsas.length === 0
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma avulsa neste campeonato.</div>'
