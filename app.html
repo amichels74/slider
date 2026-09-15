@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Vôlei — Cobranças</title>
+<!-- v2.3 -->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f6;color:#1a1a2e;-webkit-tap-highlight-color:transparent;}
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:white;}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:white;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;}
+.hdr h1{font-size:16px;font-weight:700;}
+.nav{display:flex;border-top:1px solid #eee;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;z-index:10;}
+.nav button{flex:1;padding:8px 2px 10px;font-size:9px;background:none;border:none;color:#bbb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.nav button .ico{font-size:20px;}
+.nav button.active{color:#378ADD;}
+.page{display:none;padding:16px 16px 88px;}
+.page.active{display:block;}
+.sec{font-size:11px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px;}
+.card{background:white;border:1px solid #eee;border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.flat{background:#f8f8fa;border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.bb{background:#E6F1FB;color:#185FA5;} .ba{background:#FAEEDA;color:#854F0B;}
+.br{background:#FCEBEB;color:#A32D2D;} .bg{background:#EAF3DE;color:#3B6D11;}
+.bgr{background:#f0f0f2;color:#666;}
+.btn{padding:10px 18px;border-radius:10px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:white;color:#1a1a2e;font-weight:500;}
+.btn:active{opacity:.8;}
+.btn-p{background:#378ADD;color:white;border-color:#378ADD;width:100%;padding:13px;font-size:15px;font-weight:700;margin-top:12px;border-radius:12px;}
+.btn-g{background:#1D9E75;color:white;border-color:#1D9E75;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+.inp{margin-bottom:12px;}
+.inp label{display:block;font-size:12px;color:#666;margin-bottom:5px;font-weight:500;}
+.inp input,.inp select{width:100%;padding:10px 12px;font-size:15px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;outline:none;}
+.inp input:focus,.inp select:focus{border-color:#378ADD;background:white;}
+.row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #f0f0f0;gap:10px;}
+.row:last-child{border-bottom:none;}
+.av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.tog{width:44px;height:26px;border-radius:13px;background:#ddd;position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;}
+.tog.on{background:#1D9E75;}
+.tog::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:white;top:2px;left:2px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.tog.on::after{left:20px;}
+.chk{width:24px;height:24px;border:2px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:14px;font-weight:700;}
+.chk.on{background:#378ADD;border-color:#378ADD;color:white;}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:14px;}
+.sl{color:#999;} .sv{font-weight:600;}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
+.modal{background:white;border-radius:20px 20px 0 0;padding:24px 18px 40px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
+.modal h2{font-size:17px;font-weight:700;margin-bottom:16px;}
+.close{float:right;background:none;border:none;font-size:24px;color:#bbb;cursor:pointer;line-height:1;}
+.empty{text-align:center;padding:40px 20px;color:#ccc;font-size:14px;}
+.empty span{font-size:36px;display:block;margin-bottom:10px;}
+.divider{height:1px;background:#f0f0f0;margin:10px 0;}
+.msg-box{background:#f8f8fa;border-radius:12px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:250px;overflow-y:auto;color:#333;margin-top:12px;}
+.loading{text-align:center;padding:40px;color:#ccc;font-size:14px;}
+.info{background:#FFF8E6;border-radius:10px;padding:10px 14px;font-size:13px;color:#854F0B;margin-bottom:12px;line-height:1.5;}
+.prog{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin:8px 0 4px;}
+.prog-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width .4s;}
+</style>
+
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#378ADD">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Vôlei Master">
+  <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+<div class="app">
+  <div class="hdr">
+    <h1>🏐 Vôlei Cobranças</h1>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-size:12px;color:#aaa;" id="hdr-nome"></span>
+      <button class="btn btn-sm" onclick="logout()" style="font-size:11px;padding:5px 10px;">Sair</button>
+    </div>
+  </div>
+
+  <div id="page-dash" class="page active"><div class="loading">Carregando...</div></div>
+
+  <div id="page-jogo" class="page">
+    <div id="jogo-lista-view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span class="sec" style="margin:0;">Jogos</span>
+        <button class="btn btn-sm" style="background:#378ADD;color:white;border-color:#378ADD;" onclick="abrirFormJogo()">+ Novo</button>
+      </div>
+      <select id="j-filtro-mes" onchange="carregarListaJogos()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
+      <div id="jogo-lista-content"><div class="loading">Carregando...</div></div>
+    </div>
+    <div id="form-jogo" style="display:none;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <button class="btn btn-sm" onclick="voltarListaJogos()">← Voltar</button>
+        <span class="sec" style="margin:0;">Novo jogo</span>
+      </div>
+      <div class="inp"><label>Campeonato</label>
+        <select id="j-camp" onchange="carregarAtletasJogo()"></select>
+      </div>
+      <div class="inp"><label>Data do jogo</label><input type="date" id="j-data"></div>
+      <div style="display:flex;gap:8px;">
+        <div class="inp" style="flex:1;"><label>Custo jogo (R$)</label><input type="number" id="j-custo" value="262.50" step="0.5"></div>
+        <div class="inp" style="flex:1;"><label>Técnico (R$)</label><input type="number" id="j-tecnico" value="300.00" step="0.5"></div>
+      </div>
+      <div class="inp"><label>Valor avulsa (R$)</label><input type="number" id="j-avulsa" value="55.00" step="0.5"></div>
+      <div class="inp"><label>Observações</label><input type="text" id="j-obs" placeholder="Opcional"></div>
+      <div style="display:flex;align-items:center;gap:12px;background:#FFF8E6;border-radius:12px;padding:12px 14px;margin-bottom:12px;">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:700;color:#854F0B;">🏖️ Mês de Férias</div>
+          <div style="font-size:12px;color:#aaa;margin-top:2px;">O custo é rateado só entre quem foi ao jogo</div>
+        </div>
+        <div class="tog" id="j-ferias-tog" onclick="toggleMesFerias()"></div>
+      </div>
+      <div id="j-ferias-info" style="display:none;background:#FFF8E6;border-radius:10px;padding:10px 14px;font-size:13px;color:#854F0B;margin-bottom:10px;">
+        ⚠️ Modo férias ativo: selecione TODAS as atletas que compareceram (mensalistas e avulsas). O custo será dividido apenas entre elas.
+      </div>
+      <p class="sec" id="j-sec-atletas">Avulsas presentes</p>
+      <p id="j-txt-atletas" style="font-size:13px;color:#aaa;margin-bottom:10px;">Mensalistas pagam o mês independente de terem jogado.</p>
+      <div id="j-info-ausentes" class="info" style="display:none;"></div>
+      <div id="j-lista-avulsas" style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;min-height:50px;"></div>
+      <button class="btn btn-p" onclick="salvarJogo()">💾 Salvar jogo</button>
+    </div>
+  </div>
+
+  <div id="page-fech" class="page">
+    <select id="fech-mes" onchange="carregarFechamento()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
+    <div id="fech-preview"><div class="loading">Calculando...</div></div>
+    <div style="display:flex;gap:8px;margin:14px 0 10px;">
+      <button class="btn" id="tab-pend" onclick="fechTab('pend')" style="flex:1;background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;">Pendentes</button>
+      <button class="btn" id="tab-pago" onclick="fechTab('pago')" style="flex:1;">Pagos</button>
+    </div>
+    <div id="fech-content"></div>
+  </div>
+
+  <div id="page-atl" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="sec" style="margin:0;">Atletas</span>
+      <button class="btn btn-sm" onclick="abrirNovaAtleta()">+ Nova</button>
+    </div>
+    <div style="display:flex;gap:6px;margin:10px 0 14px;flex-wrap:wrap;">
+      <button class="btn btn-sm" id="at-todas"       onclick="filtrarAtletas('todas')"       style="background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;">Todas</button>
+      <button class="btn btn-sm" id="at-avulsas"     onclick="filtrarAtletas('avulsas')">Avulsas</button>
+      <button class="btn btn-sm" id="at-mensalistas" onclick="filtrarAtletas('mensalistas')">Mensalistas</button>
+      <button class="btn btn-sm" id="at-ausentes"    onclick="filtrarAtletas('ausentes')">Ausentes</button>
+      <button class="btn btn-sm" id="at-inativas"    onclick="filtrarAtletas('inativas')">Inativas</button>
+    </div>
+    <div id="atl-content"><div class="loading">Carregando...</div></div>
+  </div>
+
+  <div id="page-camp" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span class="sec" style="margin:0;">Campeonatos</span>
+      <button class="btn btn-sm" style="background:#378ADD;color:white;border-color:#378ADD;" onclick="abrirNovoCampeonato()">+ Novo</button>
+    </div>
+    <div id="camp-content"><div class="loading">Carregando...</div></div>
+  </div>
+
+  <div id="page-rest" class="page">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span class="sec" style="margin:0;">Restrições</span>
+    </div>
+    <div class="flat" style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">🔗 Link para atletas preencherem</div>
+      <p style="font-size:12px;color:#aaa;margin-bottom:10px;">Envie esse link no grupo. As atletas informam os dias que não poderão jogar.</p>
+      <select id="rest-camp-link" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:10px;">
+        <option value="">Carregando...</option>
+      </select>
+      <button class="btn" style="width:100%;font-size:13px;color:#185FA5;border-color:#B5D4F4;" onclick="copiarLinkRestricao()">📋 Copiar link</button>
+    </div>
+    <div class="flat" style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">📊 Relatório por data</div>
+      <select id="rest-camp-rel" onchange="carregarRestricoes()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:10px;">
+        <option value="">Carregando...</option>
+      </select>
+      <div style="display:flex;gap:8px;margin-bottom:4px;">
+        <div style="flex:1;">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">De (opcional)</div>
+          <input type="date" id="rest-de" style="width:100%;padding:8px 10px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafafa;color:#1a1a2e;">
+        </div>
+        <div style="flex:1;">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Até (opcional)</div>
+          <input type="date" id="rest-ate" style="width:100%;padding:8px 10px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafafa;color:#1a1a2e;">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn" style="flex:1;font-size:12px;background:#185FA5;color:white;border-color:#185FA5;" onclick="abrirRelatorioRestricoes('detalhado')">📄 Relatório detalhado</button>
+        <button class="btn" style="flex:1;font-size:12px;background:#1D9E75;color:white;border-color:#1D9E75;" onclick="abrirRelatorioRestricoes('tabela')">📊 Planilha PDF</button>
+      </div>
+    </div>
+    <div id="rest-content"><div class="loading">Carregando...</div></div>
+  </div>
+
+  <nav class="nav">
+    <button class="active" onclick="showPage('dash')"><span class="ico">🏠</span>Início</button>
+    <button onclick="showPage('jogo')"><span class="ico">➕</span>Jogos</button>
+    <button onclick="showPage('fech')"><span class="ico">💰</span>Cobranças</button>
+    <button onclick="showPage('atl')"><span class="ico">👥</span>Atletas</button>
+    <button onclick="showPage('camp')"><span class="ico">🏆</span>Campeonatos</button>
+    <button onclick="showPage('rest')"><span class="ico">🚫</span>Restrições</button>
+  </nav>
+</div>
+
+<div id="modal-bg" style="display:none;" class="modal-bg" onclick="fecharModal(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<!-- Custom alert/confirm -->
+<div id="custom-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;padding:20px;">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:24px 20px;width:calc(100% - 40px);max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+    <div style="font-size:13px;font-weight:700;color:#378ADD;margin-bottom:8px;">🏐 Vôlei Master</div>
+    <div id="dialog-msg" style="font-size:15px;color:#1a1a2e;margin-bottom:20px;line-height:1.5;white-space:pre-line;"></div>
+    <div id="dialog-btns" style="display:flex;gap:10px;justify-content:flex-end;"></div>
+  </div>
+</div>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────
+const TOKEN = () => localStorage.getItem('volei_token');
+const NOME  = () => localStorage.getItem('volei_nome');
+if (!TOKEN()) { window.location.href = 'index.html'; }
+document.getElementById('hdr-nome').textContent = NOME()||'';
+function logout(){ localStorage.removeItem("volei_token"); localStorage.removeItem("volei_nome"); localStorage.removeItem("volei_nivel"); window.location.href="index.html"; }
+var NIVEL = localStorage.getItem("volei_nivel") || "admin";
+function podeEditar(){ return NIVEL === "admin" || NIVEL === "padrao"; }
+function podeExcluir(){ return NIVEL === "admin"; }
+function podeGerenciarUsuarios(){ return NIVEL === "admin"; }
+
+// ── API ───────────────────────────────────────────────
+async function api(url, method='GET', body=null) {
+  try {
+    const opts = { method, headers: {'Content-Type':'application/json','Authorization':'Bearer '+TOKEN()} };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch('api/'+url, opts);
+    if (res.status === 401) { logout(); return null; }
+    return await res.json();
+  } catch(e) { console.error('API error:', url, e); return null; }
+}
+
+// ── HELPERS ───────────────────────────────────────────
+const R   = n => 'R$ '+parseFloat(n||0).toFixed(2).replace('.',',');
+const ini = n => n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
+const avS = t => t==='avulsa'?'background:#FAEEDA;color:#854F0B;':t==='organizadora'?'background:#EEEDFE;color:#3C3489;':t==='tecnico'?'background:#E8F5E9;color:#2E7D32;':'background:#B5D4F4;color:#0C447C;';
+const fmtD= d => { if(!d)return''; const[y,m,dd]=d.split('-'); return dd+'/'+m+'/'+y; };
+const fmtDataHora = s => { if(!s)return''; const d=new Date(s.replace(' ','T')); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+const fmtMes = m => { const[y,mo]=m.split('-'); const n=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return n[parseInt(mo)-1]+'/'+y; };
+const dataHoje = () => new Date().toISOString().split('T')[0];
+
+function initSelectMes(id, onchange) {
+  const sel = document.getElementById(id);
+  if (!sel || sel.options.length) return;
+  const hoje = new Date();
+  for(let i=0; i<6; i++){
+    const d = new Date(hoje.getFullYear(), hoje.getMonth()-i, 1);
+    const val = d.toISOString().slice(0,7);
+    sel.appendChild(new Option(fmtMes(val), val));
+  }
+  if (onchange) sel.onchange = onchange;
+}
+
+function proximosMeses(n) {
+  const meses = []; const hoje = new Date();
+  for(let i=-6; i<=n; i++){
+    const d = new Date(hoje.getFullYear(), hoje.getMonth()+i, 1);
+    const val = d.toISOString().slice(0,7);
+    const label = fmtMes(val)+(i===0?' (atual)':i<0?' (passado)':'');
+    meses.push({val, label});
+  }
+  return meses;
+}
+
+function fecharModal(e) {
+  if (!e || e.target===document.getElementById('modal-bg'))
+    document.getElementById('modal-bg').style.display='none';
+}
+
+// ── NAVEGAÇÃO ─────────────────────────────────────────
+const PAGES = ['dash','jogo','fech','atl','camp','rest'];
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav button').forEach(e=>e.classList.remove('active'));
+  const el = document.getElementById('page-'+p);
+  if (el) el.classList.add('active');
+  const idx = PAGES.indexOf(p);
+  if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if (p==='dash') renderDash();
+  if (p==='jogo') { initSelectMes('j-filtro-mes', carregarListaJogos); carregarListaJogos(); }
+  if (p==='fech') { initSelectMes('fech-mes', carregarFechamento); carregarFechamento(); }
+  if (p==='atl')  carregarAtletas();
+  if (p==='camp') carregarCampeonatos();
+  if (p==='rest') carregarRestricoes();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────
+async function renderDash() {
+  const el = document.getElementById('page-dash');
+  el.innerHTML = '<div class="loading">Carregando...</div>';
+  const mes = new Date().toISOString().slice(0,7);
+
+  const [pagamentos, jogos, preview, atletas, pagGeral, lembretes] = await Promise.all([
+    api('pagamentos.php?mes='+mes),
+    api('jogos.php?mes='+mes),
+    api('fechamento.php?mes='+mes),
+    api('atletas.php'),
+    api('pagamentos.php?todos=1'),
+    api('lembretes.php')
+  ]);
+
+  const pags     = pagamentos || {pendentes:[], pagos:[], total_pago:0};
+  const nJogos   = jogos ? jogos.length : 0;
+  const camps    = preview && preview.campeonatos ? preview.campeonatos : [];
+  const totalPreview = camps.reduce((s,c) => s + (c.cota_mensalista * c.n_mensalistas) + parseFloat(c.rec_avulsas||0), 0);
+  const totalPago    = parseFloat(pags.total_pago||0);
+  const totalPend    = Math.max(0, totalPreview - totalPago);
+  const tot = pags.pendentes.length + pags.pagos.length;
+  const pct = totalPreview > 0 ? Math.round(totalPago / totalPreview * 100) : 0;
+  const geralPend = parseFloat((pagGeral&&pagGeral.total_pendente)||0);
+  const geralPago = parseFloat((pagGeral&&pagGeral.total_pago)||0);
+
+  // — LEMBRETES —
+  const lems = lembretes || [];
+  let lemHtml = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+  lemHtml += '<p class="sec" style="margin:0;">📌 Lembretes</p>';
+  lemHtml += '<button class="btn btn-sm" onclick="abrirNovoLembrete()" style="font-size:11px;">+ Novo</button>';
+  lemHtml += '</div>';
+  if (!lems.length) {
+    lemHtml += '<div style="background:#f8f8fa;border-radius:14px;padding:12px 16px;margin-bottom:10px;text-align:center;color:#bbb;font-size:13px;">Nenhum lembrete ainda.</div>';
+  } else {
+    lems.forEach(function(l) {
+      lemHtml += '<div style="background:#FFF8E6;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start;">';
+      lemHtml += '<div style="flex:1;">';
+      lemHtml += '<div style="font-size:14px;color:#1a1a2e;line-height:1.5;">' + l.texto.replace(/\n/g,'<br>') + '</div>';
+      lemHtml += '<div style="font-size:11px;color:#bbb;margin-top:4px;">' + (l.criado_por ? l.criado_por + ' · ' : '') + fmtDataHora(l.criado_em) + '</div>';
+      lemHtml += '</div>';
+      lemHtml += '<button onclick="excluirLembrete(' + l.id + ')" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;line-height:1;flex-shrink:0;">×</button>';
+      lemHtml += '</div>';
+    });
+  }
+  el.innerHTML = lemHtml;
+
+  // — MESES ANTERIORES por campeonato —
+  var porCampGeral = (pagGeral && pagGeral.por_campeonato) || [];
+  var gBlock = '<p class="sec">Meses anteriores</p>';
+  if (porCampGeral.length === 0) {
+    gBlock += '<div style="background:#f8f8fa;border-radius:14px;padding:12px 16px;margin-bottom:10px;text-align:center;color:#bbb;font-size:13px;">Nenhum jogo registrado.</div>';
+  } else {
+    porCampGeral.forEach(function(c) {
+      gBlock += '<div style="background:#f8f8fa;border-radius:14px;padding:12px 16px;margin-bottom:8px;">';
+      gBlock += '<div style="font-size:12px;font-weight:700;color:#555;margin-bottom:8px;">\u{1F3C6} ' + c.camp_nome + '</div>';
+      gBlock += '<div style="display:flex;justify-content:space-between;">';
+      gBlock += '<div><div style="font-size:11px;color:#bbb;margin-bottom:2px;">Pendente</div><div style="font-size:18px;font-weight:700;color:#A32D2D;">' + R(c.total_pend) + '</div></div>';
+      gBlock += '<div style="text-align:right;"><div style="font-size:11px;color:#bbb;margin-bottom:2px;">Recebido</div><div style="font-size:18px;font-weight:700;color:#3B6D11;">' + R(c.total_pago) + '</div></div>';
+      gBlock += '</div></div>';
+    });
+  }
+  el.innerHTML += gBlock;
+
+  // — MÊS ATUAL por campeonato —
+  // Recebido = fechamentos pago=1 por campeonato
+  // Pendente = custo liquido do campeonato no mes - recebido
+  var pagosPorCamp = {};
+  (pags.pagos||[]).forEach(function(p){ pagosPorCamp[p.campeonato_id] = (pagosPorCamp[p.campeonato_id]||0) + parseFloat(p.valor||0); });
+
+  var html = '<p class="sec">M\u00eas atual \u2014 ' + fmtMes(mes) + '</p>';
+  if (camps.length === 0) {
+    html += '<div class="flat" style="text-align:center;color:#bbb;font-size:13px;">Nenhum jogo em ' + fmtMes(mes) + '.</div>';
+  } else {
+    camps.forEach(function(c) {
+      var campPago = pagosPorCamp[c.campeonato_id] || 0;
+      // Custo liquido = custo total - receita avulsas (vem do preview de fechamento.php)
+      var custoLiq = parseFloat(c.custo_liquido || 0);
+      var campPend = Math.max(0, custoLiq - campPago);
+      html += '<div class="flat" style="margin-bottom:8px;">';
+      html += '<div style="display:flex;justify-content:space-between;margin-bottom:6px;">';
+      html += '<span style="font-size:13px;font-weight:700;">\u{1F3C6} ' + c.camp_nome + '</span>';
+      html += '<span style="font-size:11px;color:#aaa;">' + c.jogos + ' jogo(s) \u00b7 cota ' + R(c.cota_mensalista) + '</span>';
+      html += '</div>';
+      html += '<div style="display:flex;justify-content:space-between;">';
+      html += '<div><div style="font-size:11px;color:#bbb;margin-bottom:2px;">Pendente</div><div style="font-size:18px;font-weight:700;color:#A32D2D;">' + R(campPend) + '</div></div>';
+      html += '<div style="text-align:right;"><div style="font-size:11px;color:#bbb;margin-bottom:2px;">Recebido</div><div style="font-size:18px;font-weight:700;color:#3B6D11;">' + R(campPago) + '</div></div>';
+      html += '</div></div>';
+    });
+  }
+
+  // — ATLETAS POR CAMPEONATO —
+  if (atletas && atletas.length) {
+    const porCamp = {};
+    atletas.forEach(function(a) {
+      (a.inscricoes || []).forEach(function(i) {
+        if (!porCamp[i.campeonato_id]) porCamp[i.campeonato_id] = { nome: i.camp_nome, mensalistas: 0, avulsas: 0, ausentes: 0, organizadoras: 0 };
+        const c = porCamp[i.campeonato_id];
+        if (i.status === 'ausente') { c.ausentes++; }
+        else if (i.status === 'ativa') {
+          if (i.tipo === 'mensalista') c.mensalistas++;
+          else if (i.tipo === 'avulsa') c.avulsas++;
+          else if (i.tipo === 'organizadora') c.organizadoras++;
+        }
+      });
+    });
+    const campIds = Object.keys(porCamp);
+    if (campIds.length) {
+      html += '<p class="sec">Atletas por campeonato</p>';
+      campIds.forEach(function(cid) {
+        const c = porCamp[cid];
+        const total = c.mensalistas + c.avulsas + c.ausentes + c.organizadoras;
+        html += '<div class="flat" style="margin-bottom:8px;">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">';
+        html += '<span style="font-size:13px;font-weight:700;">🏆 ' + c.nome + '</span>';
+        html += '<span style="font-size:11px;color:#aaa;">' + total + ' atleta(s)</span>';
+        html += '</div>';
+        html += '<div style="display:flex;gap:6px;flex-wrap:wrap;">';
+        if (c.mensalistas)   html += '<span class="badge bb">' + c.mensalistas + ' mensalista' + (c.mensalistas > 1 ? 's' : '') + '</span>';
+        if (c.avulsas)       html += '<span class="badge ba">' + c.avulsas + ' avulsa' + (c.avulsas > 1 ? 's' : '') + '</span>';
+        if (c.ausentes)      html += '<span class="badge br">' + c.ausentes + ' ausente' + (c.ausentes > 1 ? 's' : '') + '</span>';
+        if (c.organizadoras) html += '<span class="badge bgr">' + c.organizadoras + ' organizadora' + (c.organizadoras > 1 ? 's' : '') + '</span>';
+        html += '</div></div>';
+      });
+    }
+  }
+
+  html += '<p class="sec">Pendentes</p>';
+  if (!pags.pendentes.length) {
+    html += `<div class="card" style="text-align:center;color:#bbb;font-size:13px;padding:16px;">${tot===0?'Marque pagamentos em Cobranças.':'Tudo em dia! 🎉'}</div>`;
+  } else {
+    pags.pendentes.slice(0,5).forEach(c => {
+      html += `<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;">
+        <div><div style="font-size:14px;font-weight:600;">${c.atleta_nome}</div>
+        <div style="font-size:12px;color:#bbb;">${c.camp_nome}</div></div>
+        <span class="badge br">${R(c.valor)}</span>
+      </div>`;
+    });
+    if (pags.pendentes.length > 5) html += `<div style="text-align:center;font-size:12px;color:#bbb;padding:8px;">+${pags.pendentes.length-5} em Cobranças</div>`;
+  }
+
+  const ausentes = atletas ? atletas.filter(a => a.inscricoes && a.inscricoes.some(i=>i.status==='ausente')) : [];
+  if (ausentes.length) {
+    html += '<p class="sec">⚠️ Ausentes</p>';
+    ausentes.forEach(a => {
+      const camps = a.inscricoes.filter(i=>i.status==='ausente').map(i=>i.camp_nome).join(', ');
+      html += `<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;">
+        <div><div style="font-size:14px;font-weight:600;">${a.nome}</div>
+        <div style="font-size:12px;color:#854F0B;">${camps}</div></div>
+        <button class="btn btn-sm" onclick="abrirGerenciar('${a.id}')">Editar</button>
+      </div>`;
+    });
+  }
+  if (podeGerenciarUsuarios()) {
+    html += '<p class="sec">Usuários do sistema</p>';
+    html += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;"><div><div style="font-size:14px;font-weight:600;">Gerenciar acessos</div><div style="font-size:12px;color:#bbb;">Cadastrar e controlar usuários</div></div><button class="btn btn-sm" onclick="abrirUsuarios()">Acessar</button></div>';
+  }
+  el.innerHTML += html;
+}
+
+// ── JOGOS ─────────────────────────────────────────────
+let selAvulsas = new Set(), atletasJogo = [], mesFerias = false;
+
+function toggleMesFerias() {
+  mesFerias = !mesFerias;
+  const tog = document.getElementById('j-ferias-tog');
+  const info = document.getElementById('j-ferias-info');
+  const sec = document.getElementById('j-sec-atletas');
+  const txt = document.getElementById('j-txt-atletas');
+  if (tog) tog.className = 'tog' + (mesFerias ? ' on' : '');
+  if (info) info.style.display = mesFerias ? '' : 'none';
+  if (sec) sec.textContent = mesFerias ? 'Atletas presentes' : 'Avulsas presentes';
+  if (txt) txt.style.display = mesFerias ? 'none' : '';
+  selAvulsas.clear();
+  carregarAtletasJogo();
+}
+
+function abrirFormJogo() {
+  document.getElementById('jogo-lista-view').style.display='none';
+  document.getElementById('form-jogo').style.display='block';
+  document.getElementById('j-data').value = dataHoje();
+  selAvulsas.clear();
+  mesFerias = false;
+  const tog = document.getElementById('j-ferias-tog');
+  const info = document.getElementById('j-ferias-info');
+  const sec = document.getElementById('j-sec-atletas');
+  const txt = document.getElementById('j-txt-atletas');
+  if (tog) tog.className = 'tog';
+  if (info) info.style.display = 'none';
+  if (sec) sec.textContent = 'Avulsas presentes';
+  if (txt) txt.style.display = '';
+  carregarAtletasJogo();
+}
+
+function voltarListaJogos() {
+  document.getElementById('form-jogo').style.display='none';
+  document.getElementById('jogo-lista-view').style.display='block';
+  carregarListaJogos();
+}
+
+async function carregarListaJogos() {
+  const mes = document.getElementById('j-filtro-mes').value;
+  if (!mes) return;
+  const el = document.getElementById('jogo-lista-content');
+  el.innerHTML = '<div class="loading">Carregando...</div>';
+  const jogos = await api('jogos.php?mes='+mes);
+  if (!jogos || !jogos.length) {
+    el.innerHTML = '<div class="empty"><span>📋</span>Nenhum jogo neste mês.<br><br><button class="btn" onclick="abrirFormJogo()">+ Registrar jogo</button></div>';
+    return;
+  }
+  el.innerHTML = jogos.map(j => {
+    const custo = parseFloat(j.custo_jogo||0) + parseFloat(j.custo_tecnico||0);
+    const isFer = !!(j.mes_ferias);
+    const nPres = isFer ? (j.presencas ? j.presencas.length : 0) : (j.avulsas ? j.avulsas.length : 0);
+    return `<div class="card" style="padding:12px 14px;cursor:pointer;" onclick="verJogo('${j.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="font-size:14px;font-weight:700;">${j.camp_nome}</div>
+            ${isFer ? '<span style="font-size:10px;background:#FFF8E6;color:#854F0B;border-radius:8px;padding:2px 6px;font-weight:700;">🏖️ Férias</span>' : ''}
+          </div>
+          <div style="font-size:12px;color:#aaa;">${fmtD(j.data_jogo)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:600;">${R(custo)}</div>
+          <div style="font-size:11px;color:#aaa;">${isFer ? nPres+' presente(s)' : nPres+' avulsa(s)'}</div>
+        </div>
+      </div>
+      ${j.observacoes?`<div style="font-size:12px;color:#aaa;margin-top:6px;">📝 ${j.observacoes}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+async function verJogo(id) {
+  const mes = document.getElementById('j-filtro-mes').value;
+  const jogos = await api('jogos.php?mes='+mes);
+  const j = jogos && jogos.find(x=>x.id===id); if(!j) return;
+
+  // Carrega atletas do campeonato para seleção de avulsas
+  const atletasDoCamp = await api('atletas.php?camp='+j.campeonato_id) || [];
+  const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&a.status==='ativa');
+  const avulsasPresentes = new Set((j.avulsas||[]).map(a=>a.atleta_id));
+
+  const isFeriasJogo = !!(j.mes_ferias);
+  // In férias mode show all active athletes; otherwise just avulsas
+  const atletasParaExibir = isFeriasJogo
+    ? atletasDoCamp.filter(a=>a.status==='ativa')
+    : avulsasDoCamp;
+  const presencasPresentes = isFeriasJogo
+    ? new Set((j.presencas||j.avulsas||[]).map(a=>a.atleta_id))
+    : avulsasPresentes;
+
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>✏️ Editar jogo</h2>
+  <p style="font-size:13px;font-weight:600;color:#aaa;margin-bottom:14px;">${j.camp_nome} · ${fmtD(j.data_jogo)}</p>
+  ${isFeriasJogo ? '<div style="background:#FFF8E6;border-radius:10px;padding:10px 14px;font-size:13px;color:#854F0B;margin-bottom:12px;">🏖️ <strong>Mês de Férias</strong> — custo rateado entre as presentes</div>' : ''}
+
+  <div class="inp"><label>Data do jogo</label>
+    <input type="date" id="ej-data" value="${j.data_jogo}">
+  </div>
+  <div style="display:flex;gap:8px;">
+    <div class="inp" style="flex:1;"><label>Custo jogo (R$)</label>
+      <input type="number" id="ej-custo" value="${j.custo_jogo}" step="0.5">
+    </div>
+    <div class="inp" style="flex:1;"><label>Técnico (R$)</label>
+      <input type="number" id="ej-tecnico" value="${j.custo_tecnico}" step="0.5">
+    </div>
+  </div>
+  <div class="inp"><label>Valor avulsa (R$)</label>
+    <input type="number" id="ej-avulsa" value="${j.valor_avulsa}" step="0.5">
+  </div>
+  <div class="inp"><label>Observações</label>
+    <input type="text" id="ej-obs" value="${j.observacoes||''}" placeholder="Opcional">
+  </div>
+
+  ${atletasParaExibir.length ? `
+  <p class="sec">${isFeriasJogo ? 'Atletas presentes (férias)' : 'Avulsas presentes'}</p>
+  <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;margin-bottom:12px;">
+    ${atletasParaExibir.map(a=>{
+      const checked = presencasPresentes.has(a.id);
+      const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
+      const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
+      return `<div class="row" data-avid="${a.id}" onclick="toggleAvulsaEdit(this)" style="cursor:pointer;gap:10px;">
+        <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;">${a.nome}</div>
+          ${isFeriasJogo ? `<div style="font-size:11px;color:#bbb;">${a.tipo}</div>` : ''}
+        </div>
+        <div class="chk ${checked?'on':''}" id="ej-chk-${a.id}">${checked?'✓':''}</div>
+      </div>`;
+    }).join('')}
+  </div>` : `<p style="font-size:13px;color:#bbb;margin-bottom:12px;">${isFeriasJogo ? 'Nenhuma atleta ativa.' : 'Nenhuma avulsa neste campeonato.'}</p>`}
+
+  <button class="btn btn-p" onclick="salvarEdicaoJogo('${j.id}','${j.campeonato_id}',${isFeriasJogo})">💾 Salvar alterações</button>
+  <button class="btn" style="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;" onclick="excluirJogo('${j.id}')">🗑️ Excluir jogo</button>`;
+
+  window._editAvulsas = new Set(presencasPresentes);
+  window._editIsFeriasJogo = isFeriasJogo;
+  document.getElementById('modal-bg').style.display='flex';
+}
+
+function toggleAvulsaEdit(row) {
+  const id = row.dataset.avid;
+  if (!window._editAvulsas) window._editAvulsas = new Set();
+  if (window._editAvulsas.has(id)) window._editAvulsas.delete(id);
+  else window._editAvulsas.add(id);
+  const el = document.getElementById('ej-chk-'+id);
+  if (el) { el.className='chk'+(window._editAvulsas.has(id)?' on':''); el.textContent=window._editAvulsas.has(id)?'✓':''; }
+}
+
+async function salvarEdicaoJogo(jogoId, campId, isFeriasJogo) {
+  const data     = document.getElementById('ej-data').value;
+  const custo    = parseFloat(document.getElementById('ej-custo').value)||0;
+  const tecnico  = parseFloat(document.getElementById('ej-tecnico').value)||0;
+  const avulsa   = parseFloat(document.getElementById('ej-avulsa').value)||55;
+  const obs      = document.getElementById('ej-obs').value;
+  const avIds    = [...(window._editAvulsas||[])];
+
+  if (!data) { await vAlert('Informe a data'); return; }
+
+  const payload = {
+    id: jogoId, campeonato_id: campId,
+    data_jogo: data, custo_jogo: custo, custo_tecnico: tecnico,
+    valor_avulsa: avulsa, observacoes: obs,
+    avulsas_ids: isFeriasJogo ? [] : avIds,
+    mes_ferias: isFeriasJogo ? 1 : 0,
+    presencas_ids: isFeriasJogo ? avIds : []
+  };
+  const res = await api('jogos.php', 'PUT', payload);
+  if (res && res.ok) { fecharModal(); carregarListaJogos(); await vAlert('Jogo atualizado!'); }
+  else await vAlert('Erro ao salvar.');
+}
+
+async function excluirJogo(id) {
+  if (!await vConfirmDelete('Excluir este jogo? Esta ação não pode ser desfeita.')) return;
+  const res = await api('jogos.php?id='+id, 'DELETE');
+  if (res && res.ok) { fecharModal(); carregarListaJogos(); }
+  else await vAlert('Erro ao excluir.');
+}
+
+async function carregarAtletasJogo() {
+  const camp = document.getElementById('j-camp').value;
+  if (!camp) return;
+  selAvulsas.clear();
+  document.getElementById('j-lista-avulsas').innerHTML = '<div class="loading">Carregando...</div>';
+  const data = await api('atletas.php?camp='+camp);
+  atletasJogo = data || [];
+  const ausentes = atletasJogo.filter(a=>a.status==='ausente');
+  const infoEl = document.getElementById('j-info-ausentes');
+  if (ausentes.length && !mesFerias) { infoEl.innerHTML=`<strong>${ausentes.length} ausente(s):</strong> `+ausentes.map(a=>a.nome).join(', '); infoEl.style.display=''; }
+  else infoEl.style.display='none';
+
+  if (mesFerias) {
+    // Férias: show all active athletes (mensalistas + avulsas)
+    const todas = atletasJogo.filter(a=>a.status==='ativa');
+    document.getElementById('j-lista-avulsas').innerHTML = todas.length === 0
+      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta ativa neste campeonato.</div>'
+      : todas.map(a=>{
+          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
+          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
+          const tipoLabel = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
+          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
+            <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
+            <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
+              <div style="font-size:11px;color:#bbb;">${tipoLabel}</div></div>
+            <div class="chk" id="chk-${a.id}"></div>
+          </div>`;
+        }).join('');
+  } else {
+    const avulsas = atletasJogo.filter(a=>a.tipo==='avulsa' && a.status==='ativa');
+    document.getElementById('j-lista-avulsas').innerHTML = avulsas.length === 0
+      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma avulsa neste campeonato.</div>'
+      : avulsas.map(a=>`<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
+          <div class="av" style="background:#FAEEDA;color:#854F0B;">${ini(a.nome)}</div>
+          <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div></div>
+          <div class="chk" id="chk-${a.id}"></div>
+        </div>`).join('');
+  }
+}
+
+function toggleAvulsa(id) {
+  if (selAvulsas.has(id)) selAvulsas.delete(id); else selAvulsas.add(id);
+  const el = document.getElementById('chk-'+id);
+  if (el) { el.className='chk'+(selAvulsas.has(id)?' on':''); el.textContent=selAvulsas.has(id)?'✓':''; }
+}
+
+async function salvarJogo() {
+  const camp = document.getElementById('j-camp').value;
+  const data = document.getElementById('j-data').value;
+  if (!data) { await vAlert('Informe a data'); return; }
+  const payload = {
+    campeonato_id: camp,
+    data_jogo: data,
+    custo_jogo: parseFloat(document.getElementById('j-custo').value)||0,
+    custo_tecnico: parseFloat(document.getElementById('j-tecnico').value)||0,
+    valor_avulsa: parseFloat(document.getElementById('j-avulsa').value)||55,
+    avulsas_ids: mesFerias ? [] : [...selAvulsas],
+    observacoes: document.getElementById('j-obs').value,
+    mes_ferias: mesFerias ? 1 : 0,
+    presencas_ids: mesFerias ? [...selAvulsas] : []
+  };
+  const res = await api('jogos.php', 'POST', payload);
+  if (res && res.ok) { selAvulsas.clear(); mesFerias = false; await vAlert('Jogo salvo!'); voltarListaJogos(); }
+  else await vAlert('Erro ao salvar jogo.');
+}
+
+// ── COBRANÇAS ─────────────────────────────────────────
+let fechTabAtiva = 'pend', previewAtual = null, ajustesAtual = [];
+
+async function carregarFechamento() {
+  const mes = document.getElementById('fech-mes').value;
+  if (!mes) return;
+  document.getElementById('fech-preview').innerHTML = '<div class="loading">Calculando...</div>';
+  document.getElementById('fech-content').innerHTML = '';
+  const [preview, pags, ajustes] = await Promise.all([
+    api('fechamento.php?mes='+mes),
+    api('pagamentos.php?mes='+mes),
+    api('ajustes.php?mes='+mes)
+  ]);
+  previewAtual = preview;
+  ajustesAtual = ajustes || [];
+  renderPreview(preview, mes);
+  renderPagamentos(pags, preview, mes);
+}
+
+function renderPreview(preview, mes) {
+  const el = document.getElementById('fech-preview');
+  if (!preview || !preview.campeonatos || !preview.campeonatos.length) {
+    el.innerHTML = `<div class="flat" style="text-align:center;color:#bbb;font-size:13px;">Nenhum jogo em ${fmtMes(mes)}.<br>Registre jogos na aba Jogos.</div>`;
+    return;
+  }
+  let html = '';
+  preview.campeonatos.forEach(c => {
+    const extras = (c.extras || []);
+    const extrasHtml = extras.length
+      ? extras.map(ex => `<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#854F0B;padding:3px 0;">
+          <span>📌 ${ex.descricao||'Extra'}</span>
+          <span style="display:flex;align-items:center;gap:6px;">${R(ex.valor)}
+            <button onclick="excluirAjuste(${ex.id},'${mes}')" style="background:none;border:none;color:#ccc;font-size:14px;cursor:pointer;padding:0;line-height:1;">×</button>
+          </span></div>`).join('')
+      : '';
+
+    html += `<div class="flat" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:14px;font-weight:700;">🏆 ${c.camp_nome}</span>
+        <span style="font-size:11px;color:#aaa;">${c.jogos} jogo(s)</span>
+      </div>
+      <div class="sr"><span class="sl">Custo total</span><span class="sv">${R(c.custo_total)}</span></div>
+      <div class="sr"><span class="sl">Receita avulsas</span><span class="sv" style="color:#3B6D11;">– ${R(c.rec_avulsas)}</span></div>
+      ${c.extras_total > 0 ? `<div class="sr"><span class="sl" style="color:#854F0B;">Extras lançados</span><span class="sv" style="color:#854F0B;">+ ${R(c.extras_total)}</span></div>` : ''}
+      ${extrasHtml}
+      <div style="margin:6px 0 4px;">
+        <button class="btn btn-sm" style="font-size:11px;color:#854F0B;border-color:#FAC775;" onclick="abrirLancarExtra('${c.campeonato_id}','${c.camp_nome}','${mes}')">+ Lançar extra</button>
+      </div>
+      <div class="sr" style="border-top:1px solid #f0f0f0;padding-top:6px;margin-top:4px;">
+        <span class="sl" style="font-weight:600;">Cota base · ${c.n_mensalistas} pagante(s)</span>
+        <span class="sv" style="font-size:18px;color:#185FA5;">${R(c.cota_mensalista)}</span>
+      </div>
+      ${c.mensalistas && c.mensalistas.some(a=>a.valor < c.cota_mensalista) ?
+        `<div style="font-size:11px;color:#854F0B;margin-top:4px;">⚠️ Ausentes/inativas pagam valor proporcional</div>` : ''}
+    </div>`;
+  });
+  html += `<button class="btn btn-p btn-g" onclick="gerarMsgWhatsApp()">📲 Gerar mensagem WhatsApp</button>`;
+  html += `<button class="btn btn-p" style="margin-top:8px;background:#185FA5;width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:12px;border:none;cursor:pointer;" onclick="abrirRelatorio()">📄 Relatório PDF</button>`;
+  if (podeGerenciarUsuarios()) {
+    html += '<p class="sec">Usuários do sistema</p>';
+    html += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;"><div><div style="font-size:14px;font-weight:600;">Gerenciar acessos</div><div style="font-size:12px;color:#bbb;">Cadastrar e controlar usuários</div></div><button class="btn btn-sm" onclick="abrirUsuarios()">Acessar</button></div>';
+  }
+  el.innerHTML += html;
+}
+
+// ── AJUSTES — EXTRAS DO CAMPEONATO ───────────────────
+async function abrirLancarExtra(campId, campNome, mes) {
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>📌 Extra — ${campNome}</h2>
+  <p style="font-size:13px;color:#aaa;margin-bottom:14px;">Este valor será somado ao custo do mês e rateado entre as mensalistas.</p>
+  <div class="inp"><label>Descrição</label><input type="text" id="ex-desc" placeholder="Ex: Taxa de arbitragem, uniforme..."></div>
+  <div class="inp"><label>Valor (R$)</label><input type="number" id="ex-valor" step="0.01" placeholder="0,00"></div>
+  <div class="inp"><label>Data</label><input type="date" id="ex-data" value="${dataHoje()}"></div>
+  <button class="btn btn-p" style="background:#854F0B;border-color:#854F0B;" onclick="salvarExtra('${campId}','${mes}')">Lançar extra</button>`;
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+
+async function salvarExtra(campId, mes) {
+  const desc  = document.getElementById('ex-desc').value.trim();
+  const valor = parseFloat(document.getElementById('ex-valor').value) || 0;
+  const data  = document.getElementById('ex-data').value;
+  if (!desc) { await vAlert('Informe a descrição.'); return; }
+  if (valor <= 0) { await vAlert('Informe um valor válido.'); return; }
+  const res = await api('ajustes.php', 'POST', {
+    tipo: 'extra_camp', campeonato_id: campId, mes_referencia: mes,
+    descricao: desc, valor, data_lancamento: data
+  });
+  if (res && res.ok) { fecharModal(); carregarFechamento(); }
+  else await vAlert((res && res.erro) || 'Erro ao lançar extra.');
+}
+
+async function excluirAjuste(id, mes) {
+  if (!await vConfirmDelete('Remover este lançamento?')) return;
+  const res = await api('ajustes.php?id='+id, 'DELETE');
+  if (res && res.ok) carregarFechamento();
+  else await vAlert('Erro ao remover.');
+}
+
+// ── AJUSTES — CRÉDITO / DEVOLUÇÃO ────────────────────
+async function abrirCreditoAtleta(atletaId, atletaNome, campId, mes) {
+  const hist = await api('ajustes.php?atleta='+atletaId) || {};
+  const saldo = hist.saldo || 0;
+  const rows  = (hist.historico || []);
+  const histHtml = rows.length
+    ? rows.map(r => `<div style="display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid #f0f0f0;">
+        <span>${r.tipo==='credito'?'💰 Crédito':'↩️ Devolução'} ${r.descricao ? '— '+r.descricao : ''}</span>
+        <span style="font-weight:600;color:${r.tipo==='credito'?'#3B6D11':'#A32D2D'};">${r.tipo==='credito'?'+':'-'}${R(r.valor)}</span>
+      </div>`).join('')
+    : '<div style="font-size:13px;color:#bbb;padding:8px 0;">Sem movimentações.</div>';
+
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>💰 ${atletaNome}</h2>
+  <div style="background:${saldo>0?'#EAF3DE':'#f8f8fa'};border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;">
+    <span style="font-size:13px;color:#555;">Saldo de crédito</span>
+    <span style="font-size:20px;font-weight:700;color:${saldo>0?'#3B6D11':'#aaa'};">${R(saldo)}</span>
+  </div>
+  <div style="max-height:180px;overflow-y:auto;margin-bottom:14px;">${histHtml}</div>
+  <div class="divider"></div>
+  <p class="sec" style="margin-top:10px;">Lançar crédito</p>
+  <p style="font-size:12px;color:#aaa;margin-bottom:8px;">Use quando a atleta pagou mais do que o devido.</p>
+  <div class="inp"><label>Valor creditado (R$)</label><input type="number" id="cr-valor" step="0.01" placeholder="0,00"></div>
+  <div class="inp"><label>Descrição (opcional)</label><input type="text" id="cr-desc" placeholder="Ex: Pagou R$300, devia R$280"></div>
+  <button class="btn btn-p btn-g" onclick="salvarCredito('${atletaId}','${campId}','${mes}','credito')">Registrar crédito</button>
+  ${saldo > 0 ? `<div class="divider" style="margin-top:12px;"></div>
+  <p class="sec" style="margin-top:10px;">Registrar devolução</p>
+  <p style="font-size:12px;color:#aaa;margin-bottom:8px;">Use quando devolveu dinheiro para a atleta.</p>
+  <div class="inp"><label>Valor devolvido (R$)</label><input type="number" id="dv-valor" step="0.01" placeholder="0,00" max="${saldo}"></div>
+  <div class="inp"><label>Descrição (opcional)</label><input type="text" id="dv-desc" placeholder="Ex: Pix devolvido"></div>
+  <button class="btn" style="width:100%;color:#A32D2D;border-color:#A32D2D;" onclick="salvarCredito('${atletaId}','${campId}','${mes}','devolucao')">Registrar devolução</button>` : ''}`;
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+
+async function salvarCredito(atletaId, campId, mes, tipo) {
+  const prefixo = tipo === 'credito' ? 'cr' : 'dv';
+  const valor = parseFloat(document.getElementById(prefixo+'-valor')?.value) || 0;
+  const desc  = document.getElementById(prefixo+'-desc')?.value.trim() || '';
+  if (valor <= 0) { await vAlert('Informe um valor válido.'); return; }
+  const res = await api('ajustes.php', 'POST', {
+    tipo, atleta_id: atletaId, campeonato_id: campId,
+    mes_referencia: mes, descricao: desc, valor,
+    data_lancamento: dataHoje()
+  });
+  if (res && res.ok) { fecharModal(); carregarFechamento(); }
+  else await vAlert((res && res.erro) || 'Erro ao registrar.');
+}
+
+async function gerarMsgWhatsApp() {
+  const mes = document.getElementById('fech-mes').value;
+  if (!previewAtual || !previewAtual.campeonatos || !previewAtual.campeonatos.length) {
+    await vAlert('Nenhum jogo para gerar mensagem.'); return;
+  }
+  let msg = `🏐 *Cobranças ${fmtMes(mes)}*\n\n`;
+  previewAtual.campeonatos.forEach(c => {
+    msg += `*${c.camp_nome}*\n`;
+    msg += `💰 Mensalistas: ${R(c.cota_mensalista)}\n`;
+    if (c.avulsas && c.avulsas.length) {
+      c.avulsas.forEach(a => { msg += `• ${a.nome} (avulsa): ${R(a.total_pago)}\n`; });
+    }
+    msg += '\n';
+  });
+  msg += `📲 Pix: [SUA CHAVE PIX]\n\nObrigada! 🙏`;
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>Mensagem WhatsApp</h2>
+  <div class="msg-box" id="msg-wa">${msg}</div>
+  <button class="btn btn-p" style="margin-top:10px;" onclick="copiarMsg()">📋 Copiar mensagem</button>`;
+  document.getElementById('modal-bg').style.display='flex';
+}
+
+async function copiarMsg() {
+  const txt = document.getElementById('msg-wa').textContent;
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>vAlert('Copiado! Cole no WhatsApp 😊'));
+}
+
+function fechTab(t) {
+  fechTabAtiva = t;
+  const pEl=document.getElementById('tab-pend'), gEl=document.getElementById('tab-pago');
+  pEl.style.cssText=t==='pend'?'flex:1;background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;':'flex:1;';
+  gEl.style.cssText=t==='pago'?'flex:1;background:#EAF3DE;color:#3B6D11;border-color:#9FE1CB;':'flex:1;';
+  const mes = document.getElementById('fech-mes').value;
+  api('pagamentos.php?mes='+mes).then(pags => renderPagamentos(pags, previewAtual, mes));
+}
+
+function renderPagamentos(pags, preview, mes) {
+  const el = document.getElementById('fech-content');
+
+  // Mapa de pagamentos por atleta+camp
+  const pagoMap = {};
+  if (pags && pags.atletas) {
+    pags.atletas.forEach(p => { pagoMap[p.atleta_id+'|'+p.campeonato_id] = p; });
+  }
+
+  // Mapa de saldo de crédito por atleta (calculado a partir dos ajustes do mês)
+  const creditoMap = {};
+  ajustesAtual.forEach(aj => {
+    if (aj.tipo === 'credito')   creditoMap[aj.atleta_id] = (creditoMap[aj.atleta_id] || 0) + parseFloat(aj.valor);
+    if (aj.tipo === 'devolucao') creditoMap[aj.atleta_id] = (creditoMap[aj.atleta_id] || 0) - parseFloat(aj.valor);
+  });
+
+  if (!preview || !preview.campeonatos || !preview.campeonatos.length) {
+    el.innerHTML = '<div style="text-align:center;font-size:13px;color:#bbb;padding:10px;">Sem jogos neste mês.</div>';
+    return;
+  }
+
+  let html = '';
+  preview.campeonatos.forEach(c => {
+    const todosMensalistas = c.mensalistas || [];
+    const todasAvulsas = c.avulsas || [];
+    const todos = [
+      ...todosMensalistas.map(a=>({...a, _tipo:'mensalista', _valor: a.valor||c.cota_mensalista})),
+      ...todasAvulsas.map(a=>({...a, _tipo:'avulsa', _valor: a.total_pago||c.valor_avulsa}))
+    ];
+
+    const atletasFiltrados = todos.filter(a => {
+      const reg = pagoMap[a.id+'|'+c.campeonato_id];
+      return fechTabAtiva==='pend' ? (!reg||!reg.pago) : (reg&&reg.pago);
+    });
+
+    if (!atletasFiltrados.length) return;
+
+    html += `<p class="sec">${c.camp_nome}</p>
+    <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;margin-bottom:10px;">`;
+
+    atletasFiltrados.forEach(a => {
+      const reg   = pagoMap[a.id+'|'+c.campeonato_id];
+      const pago  = reg && reg.pago;
+      const valor = a._valor;
+      const tipo  = a._tipo;
+      const togId = `tog-${a.id}-${c.campeonato_id}`;
+      const notaProp = tipo==='mensalista' && valor < c.cota_mensalista
+        ? ` <span style="color:#854F0B;font-size:11px;">(proporcional)</span>` : '';
+      const saldoCred = Math.max(0, creditoMap[a.id] || 0);
+      const credTag = saldoCred > 0
+        ? `<span style="font-size:10px;background:#EAF3DE;color:#3B6D11;border-radius:10px;padding:1px 6px;font-weight:600;">💰 ${R(saldoCred)} crédito</span>` : '';
+      html += `<div class="row" style="gap:8px;">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:500;">${a.nome} ${credTag}</div>
+          <div style="font-size:12px;font-weight:600;color:${pago?'#3B6D11':'#A32D2D'};">${R(valor)} ${pago?'pago ✓':'pendente'}${notaProp} · <span class="badge ${tipo==='avulsa'?'ba':'bb'}">${tipo}</span></div>
+        </div>
+        <button style="background:none;border:1px solid #e0e0e0;border-radius:8px;font-size:16px;padding:4px 7px;cursor:pointer;color:#3B6D11;" title="Crédito/devolução" onclick="abrirCreditoAtleta('${a.id}','${a.nome}','${c.campeonato_id}','${mes}')">💰</button>
+        <div class="tog ${pago?'on':''}" id="${togId}" onclick="togglePagamento('${a.id}','${c.campeonato_id}','${mes}',${valor},'${tipo}','${togId}')"></div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  el.innerHTML = html || `<div class="empty"><span>${fechTabAtiva==='pend'?'🎉':'💸'}</span>${fechTabAtiva==='pend'?'Tudo em dia!':'Nenhum pagamento ainda.'}</div>`;
+}
+
+async function togglePagamento(atletaId, campId, mes, valor, tipo, togId) {
+  const el = document.getElementById(togId);
+  const jaPago = el && el.classList.contains('on');
+  if (el) el.classList.toggle('on');
+  const res = await api('pagamentos.php', 'POST', {
+    atleta_id: atletaId, campeonato_id: campId,
+    mes_referencia: mes, valor, tipo, pago: jaPago ? 0 : 1
+  });
+  if (!res || !res.ok) { if (el) el.classList.toggle('on'); await vAlert('Erro ao registrar.'); return; }
+  const pags = await api('pagamentos.php?mes='+mes);
+  renderPagamentos(pags, previewAtual, mes);
+  renderDash();
+}
+
+// ── ATLETAS ───────────────────────────────────────────
+let todosAtletas = [], filtroAtl = 'todas';
+
+async function carregarAtletas() {
+  document.getElementById('atl-content').innerHTML = '<div class="loading">Carregando...</div>';
+  todosAtletas = await api('atletas.php') || [];
+  renderAtletas();
+}
+
+function filtrarAtletas(f) {
+  filtroAtl = f;
+  const cores = {
+    todas:['#E6F1FB','#185FA5','#B5D4F4'], avulsas:['#FAEEDA','#854F0B','#FAC775'],
+    mensalistas:['#EAF3DE','#3B6D11','#9FE1CB'], ausentes:['#FCEBEB','#A32D2D','#F7C1C1'],
+    inativas:['#f0f0f2','#555','#ccc']
+  };
+  ['todas','avulsas','mensalistas','ausentes','inativas'].forEach(t => {
+    const el = document.getElementById('at-'+t); if (!el) return;
+    const on = t===f;
+    el.style.background = on ? cores[t][0] : '';
+    el.style.color      = on ? cores[t][1] : '';
+    el.style.borderColor= on ? cores[t][2] : '#ddd';
+  });
+  renderAtletas();
+}
+
+function renderAtletas() {
+  let lista = todosAtletas;
+  if (filtroAtl==='todas')       lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status!=='inativa'));
+  if (filtroAtl==='avulsas')     lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.tipo==='avulsa'&&i.status!=='inativa'));
+  if (filtroAtl==='mensalistas') lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.tipo==='mensalista'&&i.status==='ativa'));
+  if (filtroAtl==='ausentes')    lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status==='ausente'));
+  if (filtroAtl==='inativas')    lista = lista.filter(a=>a.inscricoes&&a.inscricoes.every(i=>i.status==='inativa'));
+  const el = document.getElementById('atl-content');
+  if (!lista.length) { el.innerHTML='<div class="empty"><span>🔍</span>Nenhuma atleta aqui.</div>'; return; }
+  el.innerHTML = lista.map(a => {
+    const insOrdenadas = [...(a.inscricoes||[])].sort((x,y)=>x.tipo==='mensalista'?-1:1);
+    const badges = insOrdenadas.map(i => {
+      const tip = i.tipo==='avulsa'?'<span class="badge ba">Avulsa</span>':i.tipo==='organizadora'?'<span class="badge bgr">Organizadora</span>':i.tipo==='tecnico'?'<span class="badge" style="background:#E8F5E9;color:#2E7D32;">Técnico</span>':'<span class="badge bb">Mensalista</span>';
+      const st  = i.status==='ausente'?'<span class="badge br">Ausente</span>':i.status==='inativa'?'<span class="badge bgr">Inativa</span>':'';
+      return `<span style="font-size:11px;color:#bbb;">${i.camp_nome}</span> ${tip}${st}`;
+    }).join('&nbsp;&nbsp;');
+    const inativa = a.inscricoes && a.inscricoes.every(i=>i.status==='inativa');
+    return `<div class="card" style="padding:12px 14px;${inativa?'opacity:.6;':''}">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="av" style="${inativa?'background:#eee;color:#aaa;':avS(a.inscricoes&&a.inscricoes[0]?.tipo||'mensalista')};width:40px;height:40px;font-size:13px;">${ini(a.nome)}</div>
+        <div style="flex:1;"><div style="font-size:15px;font-weight:700;">${a.nome}</div>
+          <div style="font-size:12px;color:#bbb;">${a.posicao}</div></div>
+        <button class="btn btn-sm" onclick="abrirGerenciar('${a.id}')">⚙️</button>
+      </div>
+      <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">${badges}</div>
+    </div>`;
+  }).join('');
+}
+
+function abrirGerenciar(id) {
+  const a = todosAtletas.find(x=>x.id===id); if (!a) return;
+  const prox = proximosMeses(6);
+  const todosCampsIds = ['cilTerca','cilQuinta','bivolt'];
+  const campsNomes = {'cilTerca':'CIL Terça','cilQuinta':'CIL Quinta','bivolt':'Bivolt 2026-1'};
+  const inscritos = (a.inscricoes||[]).map(i=>i.campeonato_id);
+  const naoInscritos = todosCampsIds.filter(c=>!inscritos.includes(c));
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2 id="edit-nome-h">${a.nome}</h2>
+  <div class="flat" style="margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">✏️ Editar dados</div>
+    <div class="inp"><label>Nome</label><input type="text" id="ed-nome" value="${a.nome}"></div>
+    <div class="inp"><label>Posição</label><select id="ed-pos">
+      ${['Ponteiro','Central','Oposto','Levantador','Líbero','Indefinido'].map(p=>`<option ${a.posicao===p?'selected':''}>${p}</option>`).join('')}
+    </select></div>
+    <button class="btn" style="width:100%;font-size:13px;" onclick="salvarNome('${a.id}')">Salvar nome / posição</button>
+  </div>
+  ${(a.inscricoes||[]).map((ins,idx)=>{
+    const temRetorno = !!ins.retorno_desde;
+    const statusLabel = ins.status==='ativa'
+      ? (temRetorno ? `↩️ Afastamento: ${fmtD(ins.status_desde||'')} → ${fmtD(ins.retorno_desde)}` : `✅ Ativa${ins.data_entrada?' desde '+fmtD(ins.data_entrada):''}`)
+      : ins.status==='ausente' ? `⚠️ Ausente desde ${fmtD(ins.status_desde||'')}` : `❌ Inativa desde ${fmtD(ins.status_desde||'')}`;
+    const statusCor = ins.status==='ativa'
+      ? (temRetorno ? '#854F0B' : '#3B6D11')
+      : ins.status==='ausente' ? '#854F0B' : '#A32D2D';
+    return `
+  <div class="card" style="margin-bottom:10px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+      <div>
+        <div style="font-size:14px;font-weight:700;">🏆 ${ins.camp_nome}</div>
+        <div style="font-size:12px;color:#aaa;margin-top:2px;">${ins.tipo==='mensalista'?'Mensalista':ins.tipo==='organizadora'?'Organizadora':ins.tipo==='tecnico'?'Técnico':'Avulsa'}${ins.tipo_a_partir_de?' · desde '+fmtMes(ins.tipo_a_partir_de):''}</div>
+      </div>
+      <span style="font-size:11px;font-weight:600;color:${statusCor};text-align:right;max-width:140px;line-height:1.4;">${statusLabel}</span>
+    </div>
+
+    <div class="inp"><label>📅 Data de entrada</label>
+      <input type="date" id="gt-entrada-${idx}" value="${ins.data_entrada||''}">
+    </div>
+
+    <div style="background:#f8f8fa;border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:2px;">💳 Forma de cobrança</div>
+      <div style="font-size:11px;color:#aaa;margin-bottom:8px;">Altere apenas se quiser mudar como esta atleta paga</div>
+      <select id="gt-tiponovo-${idx}" onchange="toggleVigencia(${idx},'${ins.tipo}')" style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;margin-bottom:8px;">
+        <option value="mensalista" ${ins.tipo==='mensalista'?'selected':''}>Mensalista — paga todo mês</option>
+        <option value="avulsa" ${ins.tipo==='avulsa'?'selected':''}>Avulsa — paga só quando vem</option>
+        <option value="organizadora" ${ins.tipo==='organizadora'?'selected':''}>Organizadora — nunca paga</option>
+        <option value="tecnico" ${ins.tipo==='tecnico'?'selected':''}>Técnico — sem cobrança</option>
+      </select>
+      <div id="vigencia-box-${idx}" style="display:none;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:#aaa;white-space:nowrap;">Vale a partir de</span>
+          <select id="gt-vigencia-${idx}" style="flex:1;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;">
+            ${prox.map(m=>`<option value="${m.val}">${m.label}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- SITUAÇÃO ATUAL -->
+    <div style="background:#f8f8fa;border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px;">⏸️ Situação atual</div>
+      <select id="gt-status-${idx}" data-status-original="${ins.status}" onchange="toggleStatusData(${idx})"
+        style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;">
+        <option value="ativa"   ${ins.status==='ativa'  ?'selected':''}>✅ Ativa</option>
+        <option value="ausente" ${ins.status==='ausente'?'selected':''}>⚠️ Ausente (lesão / férias)</option>
+        <option value="inativa" ${ins.status==='inativa'?'selected':''}>❌ Inativa (saiu)</option>
+      </select>
+      <!-- inputs ocultos que guardam os valores para salvar -->
+      <input type="hidden" id="gt-desde-${idx}" value="${ins.status_desde||''}">
+    </div>
+
+    <!-- CONTROLE DE AFASTAMENTO -->
+    <div style="background:#f8f8fa;border-radius:10px;padding:12px;">
+      <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">📋 Controle de afastamento</div>
+
+      <!-- Ausente: campos de edição -->
+      <div id="desde-visivel-box-${idx}" style="${ins.status==='ausente'?'':'display:none;'}">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Início do afastamento</div>
+            <input type="date" id="gt-desde-visivel-${idx}" value="${ins.status==='ausente'?(ins.status_desde||dataHoje()):''}"
+              style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;"
+              oninput="document.getElementById('gt-desde-${idx}').value=this.value">
+          </div>
+        </div>
+        <div id="motivo-box-${idx}" style="${ins.status==='ausente'?'':'display:none;'}">
+          <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Motivo (opcional)</div>
+          <input type="text" id="gt-motivo-${idx}" value="${ins.motivo_ausencia||''}" placeholder="Ex: lesão no joelho"
+            style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;">
+        </div>
+      </div>
+      <!-- hidden para inativa -->
+      <div id="desde-box-${idx}" style="display:none;"></div>
+
+      <!-- Voltou: campos "Saiu em / Voltou em" lado a lado (só visível durante transição ausente→ativa) -->
+      <div id="retorno-box-${idx}" style="display:none;">
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <div style="flex:1;">
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Saiu em</div>
+            <input type="date" id="gt-desde-retorno-${idx}" value="${ins.status_desde||''}"
+              style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;"
+              oninput="document.getElementById('gt-desde-${idx}').value=this.value">
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Voltou em</div>
+            <input type="date" id="gt-retorno-${idx}" value="${ins.retorno_desde||''}"
+              style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;">
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumo do afastamento atual/último (somente leitura + edição) -->
+      ${(ins.status==='ausente'||temRetorno)?`
+      <div id="afas-resumo-${idx}" style="background:${temRetorno?'#EAF3DE':'#FFF8E6'};border-radius:8px;padding:10px 12px;margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-size:11px;font-weight:600;color:${temRetorno?'#3B6D11':'#854F0B'};">
+            ${temRetorno?'↩️ Último afastamento':'⚠️ Afastamento atual'}
+          </div>
+          <button onclick="toggleEditAfastamento(${idx})" style="font-size:11px;color:#378ADD;background:none;border:none;cursor:pointer;padding:2px 6px;">✏️ Editar</button>
+        </div>
+        <!-- Visualização -->
+        <div id="afas-view-${idx}" style="display:flex;gap:16px;font-size:13px;flex-wrap:wrap;">
+          <div><span style="font-size:11px;color:#aaa;display:block;margin-bottom:2px;">Saiu em</span><strong>${fmtD(ins.status_desde||'')}</strong></div>
+          ${temRetorno?`<div><span style="font-size:11px;color:#aaa;display:block;margin-bottom:2px;">Voltou em</span><strong>${fmtD(ins.retorno_desde)}</strong></div>`:''}
+          ${ins.motivo_ausencia?`<div style="flex:1;"><span style="font-size:11px;color:#aaa;display:block;margin-bottom:2px;">Motivo</span><strong>${ins.motivo_ausencia}</strong></div>`:''}
+        </div>
+        <!-- Edição inline -->
+        <div id="afas-edit-${idx}" style="display:none;">
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <div style="flex:1;">
+              <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Saiu em</div>
+              <input type="date" id="afas-desde-${idx}" value="${ins.status_desde||''}"
+                style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;">
+            </div>
+            ${temRetorno?`<div style="flex:1;">
+              <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Voltou em</div>
+              <input type="date" id="afas-retorno-${idx}" value="${ins.retorno_desde||''}"
+                style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;">
+            </div>`:''}
+          </div>
+          <div style="margin-bottom:8px;">
+            <div style="font-size:11px;color:#aaa;margin-bottom:4px;">Motivo</div>
+            <input type="text" id="afas-motivo-${idx}" value="${ins.motivo_ausencia||''}" placeholder="Lesão, férias..."
+              style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;">
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="salvarAfastamentoEdit('${a.id}','${ins.campeonato_id}',${idx},${temRetorno?'true':'false'})"
+              style="flex:1;padding:8px;font-size:13px;background:#1D9E75;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Salvar</button>
+            <button onclick="toggleEditAfastamento(${idx})"
+              style="flex:1;padding:8px;font-size:13px;background:#f0f0f2;color:#555;border:none;border-radius:8px;cursor:pointer;">Cancelar</button>
+          </div>
+        </div>
+      </div>`:'<div style="font-size:13px;color:#ccc;text-align:center;padding:10px 0;">Nenhum afastamento registrado.</div>'}
+    </div>
+  </div>`;
+  }).join('')}
+  ${naoInscritos.length?`
+  <div class="flat" style="margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:600;color:#555;margin-bottom:8px;">➕ Adicionar em campeonato</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <select id="add-camp" style="flex:1;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;">
+        ${naoInscritos.map(c=>`<option value="${c}">${campsNomes[c]||c}</option>`).join('')}
+      </select>
+      <select id="add-tipo" style="flex:1;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;">
+        <option value="mensalista">Mensalista</option>
+        <option value="avulsa">Avulsa</option>
+      </select>
+    </div>
+    <button class="btn" style="width:100%;margin-top:8px;font-size:13px;" onclick="adicionarCampeonato('${a.id}')">Inscrever neste campeonato</button>
+  </div>`:''}
+  <div style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:12px;display:flex;flex-direction:column;gap:8px;">
+    <button class="btn" style="width:100%;color:#185FA5;border-color:#B5D4F4;" onclick="verHistoricoStatus('${a.id}','${a.nome}')">📋 Histórico de situações</button>
+    <button class="btn" style="width:100%;color:#A32D2D;border-color:#A32D2D;" onclick="excluirAtleta('${a.id}','${a.nome}')">🗑️ Excluir atleta do sistema</button>
+  </div>
+  <button class="btn btn-p" onclick="salvarGerenciar('${a.id}')">Salvar alterações</button>`;
+  document.getElementById('modal-bg').style.display='flex';
+}
+
+async function verHistoricoStatus(id, nome) {
+  const hist = await api('atletas.php?historico='+id) || [];
+  const labels = { ativa: '✅ Ativa', ausente: '⚠️ Ausente', inativa: '❌ Inativa' };
+  const cores  = { ativa: '#3B6D11',  ausente: '#854F0B',    inativa: '#A32D2D'    };
+
+  const linhas = hist.length ? hist.map(h => {
+    const data  = h.status_desde ? fmtD(h.status_desde) : '—';
+    const motivo = h.motivo ? `<div style="font-size:11px;color:#aaa;margin-top:2px;">💬 ${h.motivo}</div>` : '';
+    return `<div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:13px;font-weight:600;color:${cores[h.status_novo]||'#555'};">${labels[h.status_novo]||h.status_novo}</span>
+        <span style="font-size:12px;color:#aaa;">${data}</span>
+      </div>
+      <div style="font-size:12px;color:#aaa;margin-top:2px;">🏆 ${h.camp_nome||h.campeonato_id}</div>
+      ${motivo}
+    </div>`;
+  }).join('')
+  : '<div style="font-size:13px;color:#bbb;padding:16px 0;text-align:center;">Nenhuma alteração registrada ainda.</div>';
+
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="abrirGerenciar('${id}')">←</button>
+  <h2>📋 ${nome}</h2>
+  <p style="font-size:12px;color:#aaa;margin-bottom:14px;">Histórico de alterações de situação</p>
+  <div>${linhas}</div>`;
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+
+function toggleVigencia(idx, tipoAtual) {
+  const novoTipo = document.getElementById('gt-tiponovo-'+idx).value;
+  const box = document.getElementById('vigencia-box-'+idx);
+  if (box) box.style.display = novoTipo !== tipoAtual ? '' : 'none';
+}
+
+function toggleStatusData(idx) {
+  const sel        = document.getElementById('gt-status-'+idx);
+  const val        = sel.value;
+  const eraAusente = sel.dataset.statusOriginal === 'ausente';
+
+  const desdeBox        = document.getElementById('desde-box-'+idx);
+  const desdeVisivelBox = document.getElementById('desde-visivel-box-'+idx);
+  const retornoBox      = document.getElementById('retorno-box-'+idx);
+  const motivoBox       = document.getElementById('motivo-box-'+idx);
+  const desdeEl         = document.getElementById('gt-desde-'+idx);
+  const desdeVisivelEl  = document.getElementById('gt-desde-visivel-'+idx);
+  const retornoEl       = document.getElementById('gt-retorno-'+idx);
+
+  if (val === 'ativa') {
+    if (eraAusente) {
+      // Voltou de afastamento: mostra campos "Saiu em / Voltou em"
+      retornoBox.style.display      = '';
+      desdeVisivelBox.style.display = 'none';
+      motivoBox.style.display       = 'none';
+      if (!retornoEl.value) retornoEl.value = dataHoje();
+      if (!desdeEl.value && desdeVisivelEl) desdeEl.value = desdeVisivelEl.value;
+    } else {
+      retornoBox.style.display      = 'none';
+      desdeVisivelBox.style.display = 'none';
+      motivoBox.style.display       = 'none';
+    }
+    desdeBox.style.display = 'none';
+  } else {
+    // Ausente ou inativa
+    desdeBox.style.display        = '';
+    desdeVisivelBox.style.display = '';
+    retornoBox.style.display      = 'none';
+    motivoBox.style.display       = val === 'ausente' ? '' : 'none';
+    if (!desdeVisivelEl.value) { desdeVisivelEl.value = dataHoje(); desdeEl.value = dataHoje(); }
+  }
+}
+
+function toggleEditAfastamento(idx) {
+  const view = document.getElementById('afas-view-'+idx);
+  const edit = document.getElementById('afas-edit-'+idx);
+  if (!edit) return;
+  const showing = edit.style.display !== 'none';
+  edit.style.display = showing ? 'none' : '';
+  view.style.display = showing ? '' : 'none';
+}
+
+async function salvarAfastamentoEdit(atletaId, campId, idx, temRetorno) {
+  const desde  = document.getElementById('afas-desde-'+idx)?.value || null;
+  const retorno = temRetorno ? (document.getElementById('afas-retorno-'+idx)?.value || null) : null;
+  const motivo = document.getElementById('afas-motivo-'+idx)?.value || '';
+  const sel    = document.getElementById('gt-status-'+idx);
+  const status = sel ? sel.value : (temRetorno ? 'ativa' : 'ausente');
+  const res = await api('atletas.php','PUT',{
+    atleta_id: atletaId, campeonato_id: campId,
+    status, status_desde: desde, motivo_ausencia: motivo, retorno_desde: retorno
+  });
+  if (res?.ok) {
+    await carregarAtletas();
+    abrirGerenciar(atletaId);
+  }
+}
+
+async function salvarNome(id) {
+  const nome = document.getElementById('ed-nome').value.trim();
+  if (!nome) { await vAlert('Informe o nome'); return; }
+  const res = await api('atletas.php','PUT',{action:'editar_nome',atleta_id:id,nome,posicao:document.getElementById('ed-pos').value});
+  if (res && res.ok) { document.getElementById('edit-nome-h').textContent=nome; await vAlert('Salvo!'); carregarAtletas(); }
+  else await vAlert('Erro ao salvar.');
+}
+
+async function adicionarCampeonato(id) {
+  const camp = document.getElementById('add-camp').value;
+  const tipo = document.getElementById('add-tipo').value;
+  const res = await api('atletas.php','POST',{atleta_id:id,campeonato_id:camp,tipo});
+  if (res && res.ok) { await vAlert('Inscrita!'); fecharModal(); carregarAtletas(); }
+  else await vAlert('Erro ao inscrever.');
+}
+
+async function salvarGerenciar(id) {
+  const a = todosAtletas.find(x=>x.id===id); if (!a) return;
+  const btn = document.querySelector('#modal-body .btn-p');
+  btn.disabled=true; btn.textContent='Salvando...';
+  for (let idx=0; idx<(a.inscricoes||[]).length; idx++) {
+    const ins = a.inscricoes[idx];
+    const tipoNovo  = document.getElementById('gt-tiponovo-'+idx).value;
+    const mesVig    = document.getElementById('gt-vigencia-'+idx).value;
+    const status    = document.getElementById('gt-status-'+idx).value;
+    const desde     = document.getElementById('gt-desde-'+idx).value;
+    const motivo    = document.getElementById('gt-motivo-'+idx)?.value||'';
+    const entrada   = document.getElementById('gt-entrada-'+idx)?.value||'';
+    const retornoEl = document.getElementById('gt-retorno-'+idx);
+    const retorno   = (status==='ativa' && retornoEl && retornoEl.closest('[style*="display:none"]')==null) ? retornoEl.value : '';
+    if (tipoNovo !== ins.tipo) {
+      await api('atletas.php','PUT',{atleta_id:id,campeonato_id:ins.campeonato_id,tipo_novo:tipoNovo,mes_vigencia:mesVig});
+    }
+    await api('atletas.php','PUT',{atleta_id:id,campeonato_id:ins.campeonato_id,status,status_desde:desde,motivo_ausencia:motivo,data_entrada:entrada,retorno_desde:retorno||null});
+  }
+  fecharModal(); carregarAtletas();
+}
+
+async function abrirNovaAtleta() {
+  document.getElementById('modal-body').innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>Nova atleta / técnico</h2>
+  <div class="inp"><label>Nome</label><input type="text" id="nn-nome" placeholder="Nome completo"></div>
+  <div class="inp"><label>Posição</label><select id="nn-pos">
+    <option>Ponteiro</option><option>Central</option><option>Oposto</option>
+    <option>Levantador</option><option>Líbero</option><option>Indefinido</option>
+    <option value="tecnico">Técnico</option>
+  </select></div>
+  <div class="inp"><label>WhatsApp (opcional)</label><input type="tel" id="nn-tel" placeholder="(11) 99999-9999"></div>
+  <p class="sec" style="margin-top:4px;">Inscrições</p>
+  <div id="nn-camps-area"><div style="padding:16px;text-align:center;color:#aaa;font-size:13px;">Carregando campeonatos...</div></div>
+  <button class="btn btn-p" onclick="salvarNovaAtleta()">Cadastrar</button>`;
+  document.getElementById('modal-bg').style.display='flex';
+
+  const camps = await api('campeonatos.php') || [];
+  window._novaCampIds = camps.map(c=>c.id);
+  document.getElementById('nn-camps-area').innerHTML = camps.length ? camps.map(c=>`
+    <div style="padding:10px 0;border-bottom:1px solid #f0f0f0;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:14px;flex:1;">${c.nome}</span>
+        <select id="nn-tipo-${c.id}" style="font-size:13px;padding:6px 10px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafafa;color:#1a1a2e;">
+          <option value="nao">Não inscrever</option>
+          <option value="mensalista">Mensalista</option>
+          <option value="avulsa">Avulsa</option>
+          <option value="organizadora">Organizadora</option>
+          <option value="tecnico">Técnico (sem cobrança)</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <label style="font-size:12px;color:#888;white-space:nowrap;">Data de entrada:</label>
+        <input type="date" id="nn-entrada-${c.id}" value="${dataHoje()}" style="flex:1;padding:6px 8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafafa;">
+      </div>
+    </div>`).join('') : '<p style="color:#aaa;font-size:13px;padding:8px 0;">Nenhum campeonato cadastrado ainda.</p>';
+}
+
+async function salvarNovaAtleta() {
+  const nome = document.getElementById('nn-nome').value.trim();
+  if (!nome) { await vAlert('Informe o nome'); return; }
+  const campIds = window._novaCampIds || [];
+  const inscricoes = campIds
+    .map(c=>({campeonato_id:c,tipo:document.getElementById('nn-tipo-'+c)?.value||'nao',data_entrada:document.getElementById('nn-entrada-'+c)?.value||''}))
+    .filter(i=>i.tipo!=='nao');
+  const res = await api('atletas.php','POST',{nome,posicao:document.getElementById('nn-pos').value,telefone:document.getElementById('nn-tel').value,inscricoes});
+  if (res && res.ok) { fecharModal(); carregarAtletas(); }
+  else await vAlert('Erro ao cadastrar.');
+}
+
+// ── CAMPEONATOS ───────────────────────────────────────
+async function carregarCampeonatos() {
+  const el = document.getElementById('camp-content');
+  const res = await api('campeonatos.php');
+  if (!res || !res.length) { el.innerHTML='<div class="empty"><span>🏆</span>Nenhum campeonato.</div>'; return; }
+  el.innerHTML = res.map(c=>`
+    <div class="card" style="padding:12px 14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><div style="font-size:15px;font-weight:700;">${c.nome}</div>
+          <div style="font-size:12px;color:#aaa;">${c.local_jogo||''} · ${c.total_atletas||0} atletas</div></div>
+        <span class="badge ${c.ativo=='1'?'bg':'bgr'}">${c.ativo=='1'?'Ativo':'Inativo'}</span>
+      </div>
+    </div>`).join('');
+  // Atualiza select de campeonatos nos formulários
+  atualizarSelectCamps(res);
+}
+
+async function abrirNovoCampeonato() {
+  const atletas = await api('atletas.php') || [];
+  const ativas = atletas.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status==='ativa'));
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>Novo campeonato</h2>
+  <div class="inp"><label>Nome</label><input type="text" id="nc-nome" placeholder="Ex: CIL Segunda"></div>
+  <div class="inp"><label>Local</label><input type="text" id="nc-local" placeholder="Ex: CIL, Bivolt..."></div>
+  <div class="inp"><label>ID (sem espaços)</label><input type="text" id="nc-id" placeholder="Ex: cilSegunda"></div>
+  <p class="sec">Atletas participantes</p>
+  <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;max-height:300px;overflow-y:auto;">
+  ${ativas.map(a=>`<div class="row" style="gap:10px;">
+    <div class="av" style="${avS(a.inscricoes[0]?.tipo||'mensalista')}">${ini(a.nome)}</div>
+    <div style="flex:1;font-size:13px;font-weight:500;">${a.nome}</div>
+    <select id="nc-tipo-${a.id}" style="font-size:12px;padding:4px 6px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;">
+      <option value="nao">Não</option>
+      <option value="mensalista">Mensalista</option>
+      <option value="avulsa">Avulsa</option>
+      <option value="organizadora">Organizadora</option>
+    </select>
+  </div>`).join('')}
+  </div>
+  <button class="btn btn-p" onclick="salvarNovoCampeonato()">Criar campeonato</button>`;
+  window._novoCampAtletas = ativas.map(a=>a.id);
+  document.getElementById('modal-bg').style.display='flex';
+}
+
+async function salvarNovoCampeonato() {
+  const atletaIds = window._novoCampAtletas || [];
+  const nome  = document.getElementById('nc-nome').value.trim();
+  const local = document.getElementById('nc-local').value.trim();
+  const id    = document.getElementById('nc-id').value.trim().replace(/\s+/g,'');
+  if (!nome || !id) { await vAlert('Preencha nome e ID'); return; }
+  const inscricoes = atletaIds
+    .map(aid=>({atleta_id:aid,tipo:document.getElementById('nc-tipo-'+aid).value}))
+    .filter(i=>i.tipo!=='nao');
+  const res = await api('campeonatos.php','POST',{id,nome,local_jogo:local,inscricoes});
+  if (res && res.ok) { fecharModal(); atualizarSelectCamps(res.camps); carregarCampeonatos(); await vAlert(`"${nome}" criado com ${inscricoes.length} atletas!`); }
+  else await vAlert(res?.erro||'Erro ao criar campeonato.');
+}
+
+function atualizarSelectCamps(camps) {
+  const sel = document.getElementById('j-camp');
+  if (!sel || !camps) return;
+  sel.innerHTML = camps.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+// ── EXCLUIR ATLETA ───────────────────────────────────────
+async function excluirAtleta(id, nome) {
+  if (!podeExcluir()) { await vAlert("Seu nivel de acesso nao permite excluir."); return; }
+  if (!confirm(`Excluir "${nome}" do sistema?
+
+Isso remove o cadastro completo. Histórico de cobranças é mantido.`)) return;
+  const res = await api('atletas.php', 'DELETE', { atleta_id: id });
+  if (res && res.ok) { fecharModal(); carregarAtletas(); await vAlert('Atleta excluída.'); }
+  else await vAlert(res?.erro || 'Erro ao excluir.');
+}
+
+// ── CUSTOM DIALOG ────────────────────────────────────
+function showDialog(msg, btns) {
+  document.getElementById('dialog-msg').textContent = msg;
+  const btnsEl = document.getElementById('dialog-btns');
+  btnsEl.innerHTML = '';
+  btns.forEach(b => {
+    const el = document.createElement('button');
+    el.textContent = b.label;
+    el.className = 'btn' + (b.primary ? ' btn-p' : '');
+    el.style.cssText = b.primary ? 'margin-top:0;width:auto;padding:10px 20px;' : 'padding:10px 20px;';
+    if (b.danger) { el.style.background='none'; el.style.color='#A32D2D'; el.style.borderColor='#A32D2D'; }
+    el.onclick = () => { hideDialog(); b.action && b.action(); };
+    btnsEl.appendChild(el);
+  });
+  const d = document.getElementById('custom-dialog');
+  d.style.display = 'block';
+}
+
+function hideDialog() {
+  document.getElementById('custom-dialog').style.display = 'none';
+}
+
+function vAlert(msg) {
+  return new Promise(resolve => {
+    showDialog(msg, [{ label:'OK', primary:true, action: resolve }]);
+  });
+}
+
+function vConfirm(msg) {
+  return new Promise(resolve => {
+    showDialog(msg, [
+      { label:'Cancelar', action: () => resolve(false) },
+      { label:'Confirmar', primary:true, action: () => resolve(true) }
+    ]);
+  });
+}
+
+function vConfirmDelete(msg) {
+  return new Promise(resolve => {
+    showDialog(msg, [
+      { label:'Cancelar', action: () => resolve(false) },
+      { label:'Excluir', danger:true, action: () => resolve(true) }
+    ]);
+  });
+}
+
+// ── LEMBRETES ─────────────────────────────────────────
+function abrirNovoLembrete() {
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>📌 Novo lembrete</h2>
+  <div class="inp"><label>Texto</label>
+    <textarea id="lem-texto" rows="4" placeholder="Ex: Pagar quadra até dia 10, lembrar de confirmar presença..."
+      style="width:100%;padding:10px 12px;font-size:15px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;resize:vertical;font-family:inherit;"></textarea>
+  </div>
+  <button class="btn btn-p" onclick="salvarLembrete()">Salvar lembrete</button>`;
+  document.getElementById('modal-bg').style.display = 'flex';
+  setTimeout(() => document.getElementById('lem-texto')?.focus(), 100);
+}
+
+async function salvarLembrete() {
+  const texto = document.getElementById('lem-texto')?.value.trim();
+  if (!texto) { await vAlert('Escreva o lembrete.'); return; }
+  const res = await api('lembretes.php', 'POST', { texto, criado_por: NOME()||'' });
+  if (res && res.ok) { fecharModal(); renderDash(); }
+  else await vAlert((res && res.erro) || 'Erro ao salvar.');
+}
+
+async function excluirLembrete(id) {
+  if (!await vConfirmDelete('Excluir este lembrete?')) return;
+  const res = await api('lembretes.php?id='+id, 'DELETE');
+  if (res && res.ok) renderDash();
+  else await vAlert('Erro ao excluir.');
+}
+
+// ── RESTRIÇÕES ─────────────────────────────────────────
+function copiarLinkRestricao() {
+  const sel  = document.getElementById('rest-camp-link');
+  const camp = sel.value;
+  const nome = sel.options[sel.selectedIndex]?.text || camp;
+  const url  = location.origin + location.pathname.replace('app.html','') + 'restricoes_form.php?camp=' + encodeURIComponent(camp) + '&nome=' + encodeURIComponent(nome);
+
+  // Modal com botão copiar
+  const existing = document.getElementById('link-modal-overlay');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'link-modal-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
+  overlay.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18);">
+      <div style="font-weight:700;font-size:16px;color:#185FA5;margin-bottom:12px;">🔗 Link para atletas</div>
+      <div id="link-modal-url" style="background:#f4f4f6;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a1a2e;word-break:break-all;margin-bottom:16px;">${url}</div>
+      <div style="display:flex;gap:10px;">
+        <button id="link-modal-copy" style="flex:1;padding:11px;background:#378ADD;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">📋 Copiar link</button>
+        <button id="link-modal-close" style="padding:11px 18px;background:#f4f4f6;color:#555;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Fechar</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+
+  document.getElementById('link-modal-close').onclick = () => overlay.remove();
+  document.getElementById('link-modal-copy').onclick = () => {
+    // Funciona em HTTP e HTTPS
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    if (ok) {
+      overlay.remove();
+    } else {
+      // Último recurso: seleciona o texto visível
+      const el = document.getElementById('link-modal-url');
+      const r = document.createRange();
+      r.selectNode(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(r);
+      document.getElementById('link-modal-copy').textContent = '✅ Selecione e copie (Ctrl+C)';
+    }
+  };
+}
+
+async function carregarRestricoes() {
+  const selLink = document.getElementById('rest-camp-link');
+  const selRel  = document.getElementById('rest-camp-rel');
+  const el = document.getElementById('rest-content');
+  if (!el) return;
+
+  // Popula os selects com campeonatos reais se ainda não foi feito
+  if (selLink && selLink.options[0] && selLink.options[0].value === '') {
+    const camps = await api('campeonatos.php') || [];
+    const opts = camps.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+    selLink.innerHTML = opts || '<option value="">Nenhum campeonato</option>';
+    selRel.innerHTML  = opts || '<option value="">Nenhum campeonato</option>';
+    // Após popular, força nova leitura com o campeonato agora selecionado
+    return carregarRestricoes();
+  }
+
+  const camp = selRel?.value || '';
+  if (!camp) return;
+  el.innerHTML = '<div class="loading">Carregando...</div>';
+  const dados = await api('restricoes.php?camp=' + camp) || [];
+  if (!dados.length) {
+    el.innerHTML = '<div class="empty"><span>📅</span>Nenhuma restrição registrada ainda.</div>';
+    return;
+  }
+
+  // Modos de visualização: por data ou por atleta
+  const modoAtual = window._restModo || 'data';
+
+  const toggleHtml = `<div style="display:flex;gap:6px;margin-bottom:12px;">
+    <button onclick="window._restModo='data';carregarRestricoes()" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid ${modoAtual==='data'?'#378ADD':'#e8e8e8'};background:${modoAtual==='data'?'#E6F1FB':'#fafafa'};color:${modoAtual==='data'?'#185FA5':'#888'};font-size:13px;font-weight:600;cursor:pointer;">📅 Por data</button>
+    <button onclick="window._restModo='atleta';carregarRestricoes()" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid ${modoAtual==='atleta'?'#378ADD':'#e8e8e8'};background:${modoAtual==='atleta'?'#E6F1FB':'#fafafa'};color:${modoAtual==='atleta'?'#185FA5':'#888'};font-size:13px;font-weight:600;cursor:pointer;">👤 Por atleta</button>
+  </div>`;
+
+  const periodoSigla = {dia_todo:'',manha:'M',tarde:'T',noite:'N'};
+  const pSuf = t => { const s=periodoSigla[t]||''; return s?` <span style="color:#A32D2D;font-size:10px;font-weight:900;">(${s})</span>`:''; };
+
+  let html = toggleHtml;
+
+  if (modoAtual === 'data') {
+    html += dados.map(d => {
+      const rows = d.atletas.map(a => {
+        const pSuf = pSuf(a.periodo);
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f5f5f5;">
+          <span style="font-size:13px;">${a.nome}${pSuf}</span>
+          <button onclick="excluirRestricao(${a.id},'${camp}')" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;line-height:1;padding:0 4px;">×</button>
+        </div>`;
+      }).join('');
+      return `<div class="card" style="margin-bottom:10px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:15px;font-weight:700;">${fmtD(d.data)}</span>
+          <span class="badge br">${d.atletas.length} indisponível${d.atletas.length > 1 ? 'is' : ''}</span>
+        </div>${rows}</div>`;
+    }).join('');
+  } else {
+    // Agrupa por atleta
+    const porAtleta = {};
+    dados.forEach(d => {
+      d.atletas.forEach(a => {
+        if (!porAtleta[a.nome]) porAtleta[a.nome] = [];
+        porAtleta[a.nome].push({id: a.id, label: fmtD(d.data) + pSuf(a.periodo), data: d.data});
+      });
+    });
+    const campNomeAtual = selRel.options[selRel.selectedIndex]?.text || camp;
+    const base = location.origin + location.pathname.replace('app.html','') + 'restricoes_form.php?camp=' + encodeURIComponent(camp) + '&nome=' + encodeURIComponent(campNomeAtual);
+    html += Object.entries(porAtleta).sort((a,b)=>a[0].localeCompare(b[0])).map(([nome, items]) => {
+      const tags = items.sort((a,b)=>a.data.localeCompare(b.data)).map(it =>
+        `<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f4fa;border-radius:16px;padding:3px 10px;font-size:12px;font-weight:600;color:#185FA5;margin:2px;">
+          ${it.label}
+          <button onclick="excluirRestricao(${it.id},'${camp}')" style="background:none;border:none;color:#aaa;font-size:14px;cursor:pointer;line-height:1;padding:0;">×</button>
+        </span>`
+      ).join('');
+      return `<div class="card" style="margin-bottom:10px;padding:12px 14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:700;">${nome}</span>
+          <span style="display:flex;gap:6px;align-items:center;">
+            <span class="badge br">${items.length} data${items.length>1?'s':''}</span>
+            <a href="${base}" target="_blank" style="font-size:11px;color:#378ADD;text-decoration:none;border:1px solid #B5D4F4;border-radius:8px;padding:3px 8px;font-weight:600;">✏️ Editar</a>
+          </span>
+        </div>
+        <div>${tags}</div>
+      </div>`;
+    }).join('');
+  }
+
+  el.innerHTML = html;
+}
+
+function abrirRelatorioRestricoes(formato) {
+  const camp  = document.getElementById('rest-camp-rel')?.value || '';
+  if (!camp) { vAlert('Selecione um campeonato.'); return; }
+  const de    = document.getElementById('rest-de')?.value  || '';
+  const ate   = document.getElementById('rest-ate')?.value || '';
+  const token = localStorage.getItem('volei_token') || '';
+  let url = 'relatorio_restricoes.php?token=' + encodeURIComponent(token) + '&camp=' + encodeURIComponent(camp) + '&formato=' + (formato||'detalhado');
+  if (de)  url += '&de='  + de;
+  if (ate) url += '&ate=' + ate;
+  window.open(url, '_blank');
+}
+
+async function excluirRestricao(id, camp) {
+  if (!await vConfirmDelete('Remover esta restrição?')) return;
+  const res = await api('restricoes.php?id=' + id, 'DELETE');
+  if (res && res.ok) carregarRestricoes();
+  else await vAlert('Erro ao remover.');
+}
+
+// ── INIT ──────────────────────────────────────────────
+async function init() {
+  initSelectMes('j-filtro-mes', carregarListaJogos);
+  initSelectMes('fech-mes', carregarFechamento);
+  const camps = await api('campeonatos.php');
+  if (camps && camps.length) atualizarSelectCamps(camps);
+  await renderDash();
+}
+
+
+async function abrirUsuarios() {
+  var users = await api("usuarios.php");
+  if (!users) { await vAlert("Erro ao carregar usuarios."); return; }
+  var mb = document.getElementById("modal-body");
+  mb.innerHTML = "";
+  var cb = document.createElement("button"); cb.className="close"; cb.textContent="×"; cb.onclick=function(){ document.getElementById("modal-bg").style.display="none"; };
+  var h = document.createElement("h2"); h.textContent="Usuarios do sistema"; h.style.marginBottom="12px";
+  var addBtn = document.createElement("button"); addBtn.className="btn btn-p"; addBtn.style.cssText="margin-bottom:14px;width:100%;"; addBtn.textContent="+ Novo usuario";
+  addBtn.onclick = abrirNovoUsuario;
+  var list = document.createElement("div");
+  var cores = {admin:"#185FA5",padrao:"#3B6D11",limitado:"#854F0B"};
+  var labels = {admin:"Admin",padrao:"Padrao",limitado:"Limitado"};
+  users.forEach(function(u) {
+    var row = document.createElement("div");
+    row.style.cssText = "display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #f0f0f0;";
+    var info = document.createElement("div"); info.style.flex="1";
+    var n = document.createElement("div"); n.style.cssText="font-size:14px;font-weight:600;"; n.textContent=u.nome;
+    var e = document.createElement("div"); e.style.cssText="font-size:12px;color:#aaa;"; e.textContent=u.email;
+    var b = document.createElement("span"); b.style.cssText="display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;margin-top:3px;background:#f0f0f2;color:"+(cores[u.nivel]||"#555")+";"; b.textContent=(labels[u.nivel]||u.nivel)+(!u.ativo?" (inativo)":"");
+    info.appendChild(n); info.appendChild(e); info.appendChild(b);
+    var eb = document.createElement("button"); eb.className="btn btn-sm"; eb.textContent="Editar";
+    eb.onclick = (function(usr){ return function(){ abrirEditarUsuario(usr); }; })(u);
+    row.appendChild(info); row.appendChild(eb); list.appendChild(row);
+  });
+  mb.appendChild(cb); mb.appendChild(h); mb.appendChild(addBtn); mb.appendChild(list);
+  document.getElementById("modal-bg").style.display="flex";
+}
+
+function criarInput(lbl, id, type, ph) {
+  var w=document.createElement("div"); w.style.marginBottom="10px";
+  var l=document.createElement("label"); l.style.cssText="display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500;"; l.textContent=lbl;
+  var i=document.createElement("input"); i.type=type; i.id=id; if(ph) i.placeholder=ph; i.style.cssText="width:100%;padding:10px 12px;font-size:15px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;";
+  w.appendChild(l); w.appendChild(i); return w;
+}
+
+function criarSelectNivel(id, valorAtual) {
+  var w=document.createElement("div"); w.style.marginBottom="10px";
+  var l=document.createElement("label"); l.style.cssText="display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500;"; l.textContent="Nivel de acesso";
+  var s=document.createElement("select"); s.id=id; s.style.cssText="width:100%;padding:10px 12px;font-size:15px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;";
+  [["admin","Admin - acesso total"],["padrao","Padrao - edita mas nao exclui"],["limitado","Limitado - apenas visualiza"]].forEach(function(x){ var o=document.createElement("option"); o.value=x[0]; o.textContent=x[1]; if(x[0]===valorAtual) o.selected=true; s.appendChild(o); });
+  w.appendChild(l); w.appendChild(s); return w;
+}
+
+function abrirNovoUsuario() {
+  var mb = document.getElementById("modal-body");
+  mb.innerHTML = "";
+  var cb = document.createElement("button"); cb.className="close"; cb.textContent="×"; cb.onclick=abrirUsuarios;
+  var h = document.createElement("h2"); h.textContent="Novo usuario"; h.style.marginBottom="14px";
+  var btn = document.createElement("button"); btn.className="btn btn-p"; btn.style.cssText="width:100%;margin-top:8px;"; btn.textContent="Cadastrar";
+  btn.onclick = async function() {
+    var res = await api("usuarios.php","POST",{nome:document.getElementById("nu-nome").value.trim(),email:document.getElementById("nu-email").value.trim(),senha:document.getElementById("nu-senha").value,nivel:document.getElementById("nu-nivel").value});
+    if (res&&res.ok) { await vAlert("Usuario cadastrado!"); abrirUsuarios(); }
+    else await vAlert((res&&res.erro)||"Erro ao cadastrar.");
+  };
+  mb.appendChild(cb); mb.appendChild(h);
+  mb.appendChild(criarInput("Nome completo","nu-nome","text",""));
+  mb.appendChild(criarInput("E-mail","nu-email","email",""));
+  mb.appendChild(criarInput("Senha","nu-senha","password","Minimo 6 caracteres"));
+  mb.appendChild(criarSelectNivel("nu-nivel","padrao"));
+  mb.appendChild(btn);
+}
+
+function abrirEditarUsuario(u) {
+  var mb = document.getElementById("modal-body");
+  mb.innerHTML = "";
+  var cb = document.createElement("button"); cb.className="close"; cb.textContent="×"; cb.onclick=abrirUsuarios;
+  var h = document.createElement("h2"); h.textContent="Editar: "+u.nome; h.style.marginBottom="14px";
+  var ativoW = document.createElement("div"); ativoW.style.cssText="display:flex;align-items:center;gap:10px;margin-bottom:12px;";
+  var ativoTog = document.createElement("div"); ativoTog.className="tog"+(u.ativo?" on":""); ativoTog.id="eu-ativo"; ativoTog.onclick=function(){ this.classList.toggle("on"); };
+  var ativoLbl = document.createElement("span"); ativoLbl.style.fontSize="13px"; ativoLbl.textContent="Usuario ativo";
+  ativoW.appendChild(ativoTog); ativoW.appendChild(ativoLbl);
+  var saveBtn = document.createElement("button"); saveBtn.className="btn btn-p"; saveBtn.style.cssText="width:100%;margin-top:8px;"; saveBtn.textContent="Salvar alteracoes";
+  saveBtn.onclick = async function() {
+    var data = {id:u.id, nivel:document.getElementById("eu-nivel").value, ativo:document.getElementById("eu-ativo").classList.contains("on")?1:0};
+    var s = document.getElementById("eu-senha").value;
+    if (s) data.senha = s;
+    var res = await api("usuarios.php","PUT",data);
+    if (res&&res.ok) { await vAlert("Salvo!"); abrirUsuarios(); }
+    else await vAlert((res&&res.erro)||"Erro ao salvar.");
+  };
+  var delBtn = document.createElement("button"); delBtn.className="btn"; delBtn.style.cssText="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;"; delBtn.textContent="Excluir usuario";
+  delBtn.onclick = async function() {
+    if (!await vConfirmDelete("Excluir "+u.nome+"?")) return;
+    var res = await api("usuarios.php","DELETE",{id:u.id});
+    if (res&&res.ok) { await vAlert("Excluido."); abrirUsuarios(); }
+    else await vAlert((res&&res.erro)||"Erro ao excluir.");
+  };
+  mb.appendChild(cb); mb.appendChild(h);
+  mb.appendChild(criarSelectNivel("eu-nivel",u.nivel));
+  mb.appendChild(ativoW);
+  mb.appendChild(criarInput("Nova senha (em branco para manter)","eu-senha","password",""));
+  mb.appendChild(saveBtn); mb.appendChild(delBtn);
+}
+
+function abrirRelatorio() {
+  var token = localStorage.getItem("volei_token") || "";
+  var mes = document.getElementById("fech-mes") ? document.getElementById("fech-mes").value : new Date().toISOString().slice(0,7);
+  var mb = document.getElementById("modal-body");
+  mb.innerHTML = "";
+  var cb = document.createElement("button"); cb.className="close"; cb.textContent="×"; cb.onclick=function(){ document.getElementById("modal-bg").style.display="none"; };
+  var h = document.createElement("h2"); h.textContent="Relatorio PDF";
+  var p = document.createElement("p"); p.style.cssText="font-size:13px;color:#aaa;margin:10px 0 14px;"; p.textContent="Escolha o campeonato e o mes:";
+  var row = document.createElement("div"); row.style.cssText="display:flex;gap:8px;margin-bottom:14px;";
+  var selCamp = document.createElement("select"); selCamp.style.cssText="flex:1;padding:9px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;";
+  [["todos","Todos os campeonatos"],["cilTerca","CIL Terca"],["cilQuinta","CIL Quinta"],["bivolt","Bivolt 2026-1"]].forEach(function(x){ var o=document.createElement("option"); o.value=x[0]; o.textContent=x[1]; selCamp.appendChild(o); });
+  var selMes = document.createElement("select"); selMes.style.cssText="flex:1;padding:9px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;";
+  var hoje = new Date();
+  for (var i=0; i<6; i++) { var d=new Date(hoje.getFullYear(),hoje.getMonth()-i,1); var v=d.toISOString().slice(0,7); var o=document.createElement("option"); o.value=v; o.textContent=fmtMes(v); if(v===mes) o.selected=true; selMes.appendChild(o); }
+  row.appendChild(selCamp); row.appendChild(selMes);
+  var btn = document.createElement("button"); btn.className="btn btn-p"; btn.style.width="100%"; btn.textContent="Abrir relatorio";
+  btn.onclick = function() { window.open("relatorio.php?token="+encodeURIComponent(token)+"&mes="+selMes.value+"&camp="+selCamp.value, "_blank"); };
+  mb.appendChild(cb); mb.appendChild(h); mb.appendChild(p); mb.appendChild(row); mb.appendChild(btn);
+  document.getElementById("modal-bg").style.display = "flex";
+}
+
+init();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(function(){});
+}
+</script>
+</body>
