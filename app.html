@@ -555,20 +555,10 @@ async function verJogo(id) {
     presencasPresentes = avulsasPresentes;
   }
 
-  // DEBUG TEMPORÁRIO — remover depois
-  const _dbgAvulsas = JSON.stringify(j.avulsas||[]);
-  const _dbgPresentes = JSON.stringify([...presencasPresentes]);
-  const _dbgAtletas = JSON.stringify(atletasParaExibir.map(a=>({id:a.id,nome:a.nome})));
-
   const mb = document.getElementById('modal-body');
   mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
   <h2>✏️ Editar jogo</h2>
   <p style="font-size:13px;font-weight:600;color:#aaa;margin-bottom:14px;">${j.camp_nome} · ${fmtD(j.data_jogo)}</p>
-  <div style="background:#f0f0f2;border-radius:8px;padding:8px;font-size:10px;color:#555;margin-bottom:10px;word-break:break-all;line-height:1.5;">
-    <strong>DEBUG j.avulsas:</strong> ${_dbgAvulsas.replace(/</g,'&lt;')}<br>
-    <strong>presencasPresentes:</strong> ${_dbgPresentes.replace(/</g,'&lt;')}<br>
-    <strong>atletas (id):</strong> ${_dbgAtletas.replace(/</g,'&lt;')}
-  </div>
   ${isFeriasJogo ? '<div style="background:#FFF8E6;border-radius:10px;padding:10px 14px;font-size:13px;color:#854F0B;margin-bottom:12px;">🏖️ <strong>Mês de Férias</strong> — custo rateado entre as presentes</div>' : ''}
 
   <div class="inp"><label>Data do jogo</label>
@@ -596,13 +586,14 @@ async function verJogo(id) {
       const checked = presencasPresentes.has(String(a.id));
       const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
       const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
-      return `<div class="row" data-avid="${a.id}" onclick="toggleAvulsaEdit(this)" style="cursor:pointer;gap:10px;">
+      const eid = String(a.id).replace(/'/g,"\\'");
+      return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;">
         <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
         <div style="flex:1;">
           <div style="font-size:14px;">${a.nome}</div>
           ${isFeriasJogo ? `<div style="font-size:11px;color:#bbb;">${a.tipo}</div>` : ''}
         </div>
-        <div class="chk ${checked?'on':''}" id="ej-chk-${a.id}">${checked?'✓':''}</div>
+        <div class="chk ${checked?'on':''}" id="ej-chk-${String(a.id)}">${checked?'✓':''}</div>
       </div>`;
     }).join('')}
   </div>` : `<p style="font-size:13px;color:#bbb;margin-bottom:12px;">${isFeriasJogo ? 'Nenhuma atleta ativa.' : 'Nenhuma avulsa neste campeonato.'}</p>`}
@@ -615,8 +606,8 @@ async function verJogo(id) {
   document.getElementById('modal-bg').style.display='flex';
 }
 
-function toggleAvulsaEdit(row) {
-  const id = String(row.dataset.avid);
+function toggleAvulsaEdit(id) {
+  id = String(id);
   if (!window._editAvulsas) window._editAvulsas = new Set();
   if (window._editAvulsas.has(id)) window._editAvulsas.delete(id);
   else window._editAvulsas.add(id);
