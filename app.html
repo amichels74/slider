@@ -529,16 +529,31 @@ async function verJogo(id) {
   // Carrega atletas do campeonato para seleção de avulsas
   const atletasDoCamp = await api('atletas.php?camp='+j.campeonato_id) || [];
   const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&a.status==='ativa');
-  const avulsasPresentes = new Set((j.avulsas||[]).map(a=>a.atleta_id));
+  // Normaliza IDs: API pode retornar atleta_id ou id
+  const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
   const isFeriasJogo = !!(j.mes_ferias);
-  // In férias mode show all active athletes; otherwise just avulsas
-  const atletasParaExibir = isFeriasJogo
-    ? atletasDoCamp.filter(a=>a.status==='ativa')
-    : avulsasDoCamp;
-  const presencasPresentes = isFeriasJogo
-    ? new Set((j.presencas||j.avulsas||[]).map(a=>a.atleta_id))
-    : avulsasPresentes;
+
+  let atletasParaExibir;
+  let presencasPresentes;
+  if (isFeriasJogo) {
+    // Férias: busca todas as atletas ativas do sistema
+    const todasData = await api('atletas.php') || [];
+    const idsVistas = new Set();
+    atletasParaExibir = [];
+    todasData.forEach(a => {
+      if (idsVistas.has(a.id)) return;
+      idsVistas.add(a.id);
+      const inscricoes = a.inscricoes || [];
+      const insc = inscricoes.find(i => i.status === 'ativa');
+      if (insc) atletasParaExibir.push({ ...a, tipo: insc.tipo, status: 'ativa' });
+    });
+    atletasParaExibir.sort((a,b)=>a.nome.localeCompare(b.nome));
+    presencasPresentes = new Set((j.presencas||j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
+  } else {
+    atletasParaExibir = avulsasDoCamp;
+    presencasPresentes = avulsasPresentes;
+  }
 
   const mb = document.getElementById('modal-body');
   mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
@@ -568,7 +583,7 @@ async function verJogo(id) {
   <p class="sec">${isFeriasJogo ? 'Atletas presentes (férias)' : 'Avulsas presentes'}</p>
   <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;margin-bottom:12px;">
     ${atletasParaExibir.map(a=>{
-      const checked = presencasPresentes.has(a.id);
+      const checked = presencasPresentes.has(String(a.id));
       const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
       const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
       return `<div class="row" data-avid="${a.id}" onclick="toggleAvulsaEdit(this)" style="cursor:pointer;gap:10px;">
@@ -585,13 +600,13 @@ async function verJogo(id) {
   <button class="btn btn-p" onclick="salvarEdicaoJogo('${j.id}','${j.campeonato_id}',${isFeriasJogo})">💾 Salvar alterações</button>
   <button class="btn" style="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;" onclick="excluirJogo('${j.id}')">🗑️ Excluir jogo</button>`;
 
-  window._editAvulsas = new Set(presencasPresentes);
+  window._editAvulsas = new Set([...presencasPresentes].map(String));
   window._editIsFeriasJogo = isFeriasJogo;
   document.getElementById('modal-bg').style.display='flex';
 }
 
 function toggleAvulsaEdit(row) {
-  const id = row.dataset.avid;
+  const id = String(row.dataset.avid);
   if (!window._editAvulsas) window._editAvulsas = new Set();
   if (window._editAvulsas.has(id)) window._editAvulsas.delete(id);
   else window._editAvulsas.add(id);
