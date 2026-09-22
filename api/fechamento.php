@@ -54,17 +54,40 @@ function separarJogos($jogos) {
 }
 
 // Calcula rateio de um jogo de férias: retorna array [atleta_id => valor]
+// Avulsas pagam valor_avulsa do jogo; o restante é dividido entre os demais presentes.
 function rateioPorPresenca($db, $jogo) {
-    $stmt = $db->prepare("SELECT atleta_id FROM participacoes WHERE jogo_id = ? AND tipo = 'ferias'");
+    // Busca presentes com seu tipo de inscrição (qualquer campeonato ativo)
+    $stmt = $db->prepare("
+        SELECT p.atleta_id,
+               COALESCE((
+                   SELECT i.tipo FROM inscricoes i
+                   WHERE i.atleta_id = p.atleta_id AND i.status = 'ativa'
+                   ORDER BY i.tipo ASC LIMIT 1
+               ), 'mensalista') AS tipo_insc
+        FROM participacoes p
+        WHERE p.jogo_id = ? AND p.tipo = 'ferias'
+    ");
     $stmt->execute([$jogo['id']]);
-    $presentes = $stmt->fetchAll(PDO::FETCH_COLUMN);
-    $n = count($presentes);
-    if ($n === 0) return [];
-    $custo = $jogo['custo_jogo'] + $jogo['custo_tecnico'];
-    $parte = round($custo / $n, 3);
+    $presentes = $stmt->fetchAll();
+    if (!$presentes) return [];
+
+    $custoTotal  = $jogo['custo_jogo'] + $jogo['custo_tecnico'];
+    $valorAvulsa = floatval($jogo['valor_avulsa'] ?? 0);
+
+    $avulsas      = array_filter($presentes, fn($p) => $p['tipo_insc'] === 'avulsa');
+    $naoAvulsas   = array_filter($presentes, fn($p) => $p['tipo_insc'] !== 'avulsa');
+
+    $recAvulsas  = count($avulsas) * $valorAvulsa;
+    $custoresto  = $custoTotal - $recAvulsas;
+    $nResto      = count($naoAvulsas);
+    $parteResto  = ($nResto > 0 && $custoresto > 0) ? round($custoresto / $nResto, 3) : 0;
+
     $result = [];
-    foreach ($presentes as $aid) {
-        $result[$aid] = ($result[$aid] ?? 0) + $parte;
+    foreach ($avulsas as $p) {
+        $result[$p['atleta_id']] = $valorAvulsa;
+    }
+    foreach ($naoAvulsas as $p) {
+        $result[$p['atleta_id']] = $parteResto;
     }
     return $result;
 }

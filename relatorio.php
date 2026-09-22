@@ -135,19 +135,41 @@ foreach ($camps as $camp) {
         $avulsas[] = ['nome' => $a['nome'], 'total' => $a['total'], 'pago' => $pago];
     }
 
-    // Cobranças de férias — rateio por presença
+    // Cobranças de férias — avulsas pagam valor_avulsa, restante divide entre os demais
     $ferias = [];
     foreach ($jogosFerias as $jf) {
-        $stmtPres = $db->prepare("SELECT p.atleta_id, a.nome, ($jf[custo_jogo] + $jf[custo_tecnico]) AS custo_jogo FROM participacoes p JOIN atletas a ON a.id=p.atleta_id WHERE p.jogo_id=? AND p.tipo='ferias'");
+        $stmtPres = $db->prepare("
+            SELECT p.atleta_id, a.nome,
+                   COALESCE((
+                       SELECT i.tipo FROM inscricoes i
+                       WHERE i.atleta_id = p.atleta_id AND i.status = 'ativa'
+                       ORDER BY i.tipo ASC LIMIT 1
+                   ), 'mensalista') AS tipo_insc
+            FROM participacoes p JOIN atletas a ON a.id=p.atleta_id
+            WHERE p.jogo_id=? AND p.tipo='ferias'
+        ");
         $stmtPres->execute([$jf['id']]);
         $presentes = $stmtPres->fetchAll();
-        $n = count($presentes);
-        if ($n === 0) continue;
-        $parte = ($jf['custo_jogo'] + $jf['custo_tecnico']) / $n;
-        foreach ($presentes as $pr) {
+        if (!$presentes) continue;
+
+        $custoTotal  = $jf['custo_jogo'] + $jf['custo_tecnico'];
+        $valorAvulsa = floatval($jf['valor_avulsa'] ?? 0);
+        $avulsasJogo = array_filter($presentes, fn($p) => $p['tipo_insc'] === 'avulsa');
+        $naoAvulsas  = array_filter($presentes, fn($p) => $p['tipo_insc'] !== 'avulsa');
+        $recAvulsas  = count($avulsasJogo) * $valorAvulsa;
+        $custoResto  = $custoTotal - $recAvulsas;
+        $nResto      = count($naoAvulsas);
+        $parteResto  = ($nResto > 0 && $custoResto > 0) ? $custoResto / $nResto : 0;
+
+        foreach ($avulsasJogo as $pr) {
             $aid = $pr['atleta_id'];
-            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago']];
-            $ferias[$aid]['total'] += $parte;
+            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'tipo' => 'Férias (avulsa)', 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago']];
+            $ferias[$aid]['total'] += $valorAvulsa;
+        }
+        foreach ($naoAvulsas as $pr) {
+            $aid = $pr['atleta_id'];
+            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'tipo' => 'Férias (rateio)', 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago']];
+            $ferias[$aid]['total'] += $parteResto;
         }
     }
     $ferias = array_values($ferias);
