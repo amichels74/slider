@@ -37,7 +37,7 @@ foreach ($camps as $camp) {
     if ($filtCamp !== 'todos' && $cId !== $filtCamp) continue;
 
     // Separa jogos normais e de férias
-    $stmtJ = $db->prepare("SELECT id, data_jogo, custo_jogo, custo_tecnico, valor_avulsa, COALESCE(mes_ferias,0) AS mes_ferias FROM jogos WHERE campeonato_id=? AND mes_referencia=? ORDER BY data_jogo");
+    $stmtJ = $db->prepare("SELECT id, campeonato_id, data_jogo, custo_jogo, custo_tecnico, valor_avulsa, COALESCE(mes_ferias,0) AS mes_ferias FROM jogos WHERE campeonato_id=? AND mes_referencia=? ORDER BY data_jogo");
     $stmtJ->execute([$cId, $filtMes]);
     $todosJogos = $stmtJ->fetchAll();
     if (!$todosJogos) continue;
@@ -142,12 +142,12 @@ foreach ($camps as $camp) {
             SELECT p.atleta_id, a.nome,
                    CASE WHEN EXISTS (
                        SELECT 1 FROM inscricoes i
-                       WHERE i.atleta_id = p.atleta_id AND i.tipo = 'avulsa' AND i.status = 'ativa'
+                       WHERE i.atleta_id = p.atleta_id AND i.campeonato_id = ? AND i.tipo = 'avulsa' AND i.status = 'ativa'
                    ) THEN 'avulsa' ELSE 'mensalista' END AS tipo_insc
             FROM participacoes p JOIN atletas a ON a.id=p.atleta_id
             WHERE p.jogo_id=? AND p.tipo='ferias'
         ");
-        $stmtPres->execute([$jf['id']]);
+        $stmtPres->execute([$jf['campeonato_id'], $jf['id']]);
         $presentes = $stmtPres->fetchAll();
         if (!$presentes) continue;
 

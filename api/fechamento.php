@@ -56,17 +56,17 @@ function separarJogos($jogos) {
 // Calcula rateio de um jogo de férias: retorna array [atleta_id => valor]
 // Avulsas pagam valor_avulsa do jogo; o restante é dividido entre os demais presentes.
 function rateioPorPresenca($db, $jogo) {
-    // Busca presentes — marca como avulsa se tiver inscrição avulsa ativa em qualquer campeonato
+    // Busca presentes — marca como avulsa se for avulsa no campeonato do jogo
     $stmt = $db->prepare("
         SELECT p.atleta_id,
                CASE WHEN EXISTS (
                    SELECT 1 FROM inscricoes i
-                   WHERE i.atleta_id = p.atleta_id AND i.tipo = 'avulsa' AND i.status = 'ativa'
+                   WHERE i.atleta_id = p.atleta_id AND i.campeonato_id = ? AND i.tipo = 'avulsa' AND i.status = 'ativa'
                ) THEN 'avulsa' ELSE 'mensalista' END AS tipo_insc
         FROM participacoes p
         WHERE p.jogo_id = ? AND p.tipo = 'ferias'
     ");
-    $stmt->execute([$jogo['id']]);
+    $stmt->execute([$jogo['campeonato_id'], $jogo['id']]);
     $presentes = $stmt->fetchAll();
     if (!$presentes) return [];
 
@@ -126,7 +126,7 @@ if ($method === 'GET') {
     foreach ($camps as $camp) {
         $cId = $camp['id'];
 
-        $stmtJ = $db->prepare("SELECT id, data_jogo, custo_jogo, custo_tecnico, valor_avulsa, COALESCE(mes_ferias,0) AS mes_ferias FROM jogos WHERE campeonato_id = ? AND mes_referencia = ? ORDER BY data_jogo");
+        $stmtJ = $db->prepare("SELECT id, campeonato_id, data_jogo, custo_jogo, custo_tecnico, valor_avulsa, COALESCE(mes_ferias,0) AS mes_ferias FROM jogos WHERE campeonato_id = ? AND mes_referencia = ? ORDER BY data_jogo");
         $stmtJ->execute([$cId, $mes]);
         $todosJogos = $stmtJ->fetchAll();
         if (!$todosJogos) continue;
@@ -281,7 +281,7 @@ if ($method === 'POST') {
     foreach ($camps as $camp) {
         $cId = $camp['id'];
 
-        $stmtJ = $db->prepare("SELECT id, data_jogo, custo_jogo, custo_tecnico, COALESCE(mes_ferias,0) AS mes_ferias FROM jogos WHERE campeonato_id=? AND mes_referencia=? ORDER BY data_jogo");
+        $stmtJ = $db->prepare("SELECT id, campeonato_id, data_jogo, custo_jogo, custo_tecnico, valor_avulsa, COALESCE(mes_ferias,0) AS mes_ferias FROM jogos WHERE campeonato_id=? AND mes_referencia=? ORDER BY data_jogo");
         $stmtJ->execute([$cId, $mes]);
         $todosJogos = $stmtJ->fetchAll();
         if (!$todosJogos) continue;
