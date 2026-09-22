@@ -56,14 +56,13 @@ function separarJogos($jogos) {
 // Calcula rateio de um jogo de férias: retorna array [atleta_id => valor]
 // Avulsas pagam valor_avulsa do jogo; o restante é dividido entre os demais presentes.
 function rateioPorPresenca($db, $jogo) {
-    // Busca presentes com seu tipo de inscrição (qualquer campeonato ativo)
+    // Busca presentes — marca como avulsa se tiver inscrição avulsa ativa em qualquer campeonato
     $stmt = $db->prepare("
         SELECT p.atleta_id,
-               COALESCE((
-                   SELECT i.tipo FROM inscricoes i
-                   WHERE i.atleta_id = p.atleta_id AND i.status = 'ativa'
-                   ORDER BY i.tipo ASC LIMIT 1
-               ), 'mensalista') AS tipo_insc
+               CASE WHEN EXISTS (
+                   SELECT 1 FROM inscricoes i
+                   WHERE i.atleta_id = p.atleta_id AND i.tipo = 'avulsa' AND i.status = 'ativa'
+               ) THEN 'avulsa' ELSE 'mensalista' END AS tipo_insc
         FROM participacoes p
         WHERE p.jogo_id = ? AND p.tipo = 'ferias'
     ");

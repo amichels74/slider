@@ -140,11 +140,10 @@ foreach ($camps as $camp) {
     foreach ($jogosFerias as $jf) {
         $stmtPres = $db->prepare("
             SELECT p.atleta_id, a.nome,
-                   COALESCE((
-                       SELECT i.tipo FROM inscricoes i
-                       WHERE i.atleta_id = p.atleta_id AND i.status = 'ativa'
-                       ORDER BY i.tipo ASC LIMIT 1
-                   ), 'mensalista') AS tipo_insc
+                   CASE WHEN EXISTS (
+                       SELECT 1 FROM inscricoes i
+                       WHERE i.atleta_id = p.atleta_id AND i.tipo = 'avulsa' AND i.status = 'ativa'
+                   ) THEN 'avulsa' ELSE 'mensalista' END AS tipo_insc
             FROM participacoes p JOIN atletas a ON a.id=p.atleta_id
             WHERE p.jogo_id=? AND p.tipo='ferias'
         ");
