@@ -591,8 +591,8 @@ async function verJogo(id) {
   });
   atletasDoCamp.sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&a.status==='ativa');
-  const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa');
+  const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&(a.status==='ativa'||a.status==='ausente'));
+  const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&(a.status==='ativa'||a.status==='ausente'));
   const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
   const isFeriasJogo = !!(j.mes_ferias);
@@ -600,7 +600,7 @@ async function verJogo(id) {
   let atletasParaExibir;
   let presencasPresentes;
   if (isFeriasJogo) {
-    atletasParaExibir = atletasDoCamp.filter(a=>a.status==='ativa');
+    atletasParaExibir = atletasDoCamp.filter(a=>a.status==='ativa'||a.status==='ausente');
     presencasPresentes = new Set((j.presencas||j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
   } else {
     atletasParaExibir = avulsasDoCamp;
@@ -650,16 +650,17 @@ async function verJogo(id) {
       const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
       const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
       const eid = String(a.id).replace(/'/g,"\\'");
-      return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;">
+      const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
+      return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;${a.status==='ausente'?'opacity:0.75;':''}">
         <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
         <div style="flex:1;">
           <div style="font-size:14px;">${a.nome}</div>
-          ${isFeriasJogo ? `<div style="font-size:11px;color:#bbb;">${a.tipo}</div>` : ''}
+          <div style="font-size:11px;color:#bbb;">${a.tipo}${afastLabel}</div>
         </div>
         <div class="chk ${checked?'on':''}" id="ej-chk-${String(a.id)}">${checked?'✓':''}</div>
       </div>`;
     }).join('')}
-  </div>` : `<p style="font-size:13px;color:#bbb;margin-bottom:12px;">${isFeriasJogo ? 'Nenhuma atleta ativa.' : 'Nenhuma avulsa neste campeonato.'}</p>`}
+  </div>` : `<p style="font-size:13px;color:#bbb;margin-bottom:12px;">${isFeriasJogo ? 'Nenhuma atleta.' : 'Nenhuma avulsa neste campeonato.'}</p>`}
 
   ${!isFeriasJogo && mensalistasDoCamp.length ? `
   <div style="margin-bottom:12px;">
@@ -739,22 +740,23 @@ async function carregarAtletasJogo() {
       if (idsVistas.has(a.id)) return;
       idsVistas.add(a.id);
       const inscricoes = a.inscricoes || [];
-      const temAtiva = inscricoes.some(i => i.status === 'ativa');
-      const tipoInsc = inscricoes.find(i => i.status === 'ativa');
-      if (temAtiva) todas.push({ ...a, tipo: tipoInsc ? tipoInsc.tipo : (a.tipo || 'mensalista'), status: 'ativa' });
+      // inclui ativas e ausentes (afastadas podem comparecer no jogo de férias)
+      const insc = inscricoes.find(i => i.status === 'ativa') || inscricoes.find(i => i.status === 'ausente');
+      if (insc) todas.push({ ...a, tipo: insc.tipo || 'mensalista', status: insc.status });
     });
     todas.sort((a, b) => a.nome.localeCompare(b.nome));
     document.getElementById('j-info-ausentes').style.display = 'none';
     document.getElementById('j-lista-avulsas').innerHTML = todas.length === 0
-      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta ativa no sistema.</div>'
+      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta no sistema.</div>'
       : todas.map(a => {
           const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
           const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
           const tipoLabel = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
-          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
+          const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
+          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
             <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
             <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
-              <div style="font-size:11px;color:#bbb;">${tipoLabel}</div></div>
+              <div style="font-size:11px;color:#bbb;">${tipoLabel}${afastLabel}</div></div>
             <div class="chk" id="chk-${a.id}"></div>
           </div>`;
         }).join('');
@@ -774,23 +776,22 @@ async function carregarAtletasJogo() {
   });
   atletasJogo.sort((a, b) => a.nome.localeCompare(b.nome));
 
-  const ausentes = atletasJogo.filter(a=>a.status==='ausente');
-  const infoEl = document.getElementById('j-info-ausentes');
-  if (ausentes.length) { infoEl.innerHTML=`<strong>${ausentes.length} ausente(s):</strong> `+ausentes.map(a=>a.nome).join(', '); infoEl.style.display=''; }
-  else infoEl.style.display='none';
+  document.getElementById('j-info-ausentes').style.display='none';
 
   {
-    const ativas = atletasJogo.filter(a=>a.status==='ativa');
-    document.getElementById('j-lista-avulsas').innerHTML = ativas.length === 0
-      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta ativa neste campeonato.</div>'
-      : ativas.map(a=>{
+    // Mostra ativas + ausentes (afastadas podem jogar como avulsa)
+    const selecionaveis = atletasJogo.filter(a=>a.status==='ativa'||a.status==='ausente');
+    document.getElementById('j-lista-avulsas').innerHTML = selecionaveis.length === 0
+      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta neste campeonato.</div>'
+      : selecionaveis.map(a=>{
           const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
           const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
           const label = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
-          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
+          const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
+          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
             <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
             <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
-              <div style="font-size:11px;color:#999;">${label}</div></div>
+              <div style="font-size:11px;color:#999;">${label}${afastLabel}</div></div>
             <div class="chk" id="chk-${a.id}"></div>
           </div>`;
         }).join('');
