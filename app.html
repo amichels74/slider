@@ -578,10 +578,21 @@ async function verJogo(id) {
   const jogos = await api('jogos.php?mes='+mes);
   const j = jogos && jogos.find(x=>x.id===id); if(!j) return;
 
-  // Carrega atletas do campeonato para seleção de avulsas
-  const atletasDoCamp = await api('atletas.php?camp='+j.campeonato_id) || [];
+  // Busca todas as atletas e filtra pelo campeonato do jogo
+  const todasAtl = await api('atletas.php') || [];
+  const atletasDoCamp = [];
+  const _idsSeen = new Set();
+  todasAtl.forEach(a => {
+    if (_idsSeen.has(a.id)) return;
+    const insc = (a.inscricoes||[]).find(i => String(i.campeonato_id) === String(j.campeonato_id));
+    if (!insc) return;
+    _idsSeen.add(a.id);
+    atletasDoCamp.push({ ...a, tipo: insc.tipo, status: insc.status });
+  });
+  atletasDoCamp.sort((a,b)=>a.nome.localeCompare(b.nome));
+
   const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&a.status==='ativa');
-  // Normaliza IDs: API pode retornar atleta_id ou id
+  const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa');
   const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
   const isFeriasJogo = !!(j.mes_ferias);
@@ -589,18 +600,7 @@ async function verJogo(id) {
   let atletasParaExibir;
   let presencasPresentes;
   if (isFeriasJogo) {
-    // Férias: busca todas as atletas ativas do sistema
-    const todasData = await api('atletas.php') || [];
-    const idsVistas = new Set();
-    atletasParaExibir = [];
-    todasData.forEach(a => {
-      if (idsVistas.has(a.id)) return;
-      idsVistas.add(a.id);
-      const inscricoes = a.inscricoes || [];
-      const insc = inscricoes.find(i => i.status === 'ativa');
-      if (insc) atletasParaExibir.push({ ...a, tipo: insc.tipo, status: 'ativa' });
-    });
-    atletasParaExibir.sort((a,b)=>a.nome.localeCompare(b.nome));
+    atletasParaExibir = atletasDoCamp.filter(a=>a.status==='ativa');
     presencasPresentes = new Set((j.presencas||j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
   } else {
     atletasParaExibir = avulsasDoCamp;
@@ -660,6 +660,21 @@ async function verJogo(id) {
       </div>`;
     }).join('')}
   </div>` : `<p style="font-size:13px;color:#bbb;margin-bottom:12px;">${isFeriasJogo ? 'Nenhuma atleta ativa.' : 'Nenhuma avulsa neste campeonato.'}</p>`}
+
+  ${!isFeriasJogo && mensalistasDoCamp.length ? `
+  <div style="margin-bottom:12px;">
+    <button onclick="(function(btn){const el=document.getElementById('mensalistas-collapse');const open=el.style.display==='block';el.style.display=open?'none':'block';btn.textContent=open?'👥 Mensalistas (${mensalistasDoCamp.length}) ▾':'👥 Mensalistas (${mensalistasDoCamp.length}) ▴';})(this)"
+      style="background:#f0f4fa;border:1.5px solid #d0dff5;color:#185FA5;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;text-align:left;">
+      👥 Mensalistas (${mensalistasDoCamp.length}) ▾
+    </button>
+    <div id="mensalistas-collapse" style="display:none;background:#f7f9fd;border:1.5px solid #d0dff5;border-top:none;border-radius:0 0 10px 10px;padding:4px 14px;">
+      ${mensalistasDoCamp.map(a=>`<div class="row" style="gap:10px;cursor:default;">
+        <div class="av" style="background:#E6F1FB;color:#185FA5;">${ini(a.nome)}</div>
+        <div style="flex:1;font-size:14px;">${a.nome}</div>
+        <div style="font-size:11px;color:#aaa;">mensalista</div>
+      </div>`).join('')}
+    </div>
+  </div>` : ''}
 
   <button class="btn btn-p" onclick="salvarEdicaoJogo('${j.id}','${j.campeonato_id}',${isFeriasJogo})">💾 Salvar alterações</button>
   <button class="btn" style="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;" onclick="excluirJogo('${j.id}')">🗑️ Excluir jogo</button>`;
