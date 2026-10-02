@@ -746,9 +746,19 @@ async function carregarAtletasJogo() {
     return;
   }
 
-  // Modo normal: todas as atletas ativas do campeonato (mensalistas + avulsas)
-  const data = await api('atletas.php?camp='+camp);
-  atletasJogo = data || [];
+  // Modo normal: busca todas as atletas do sistema e filtra pelas do campeonato
+  const todasRaw = await api('atletas.php') || [];
+  atletasJogo = [];
+  const idsSeen = new Set();
+  todasRaw.forEach(a => {
+    if (idsSeen.has(a.id)) return;
+    const insc = (a.inscricoes || []).find(i => String(i.campeonato_id) === String(camp));
+    if (!insc) return;
+    idsSeen.add(a.id);
+    atletasJogo.push({ ...a, tipo: insc.tipo, status: insc.status });
+  });
+  atletasJogo.sort((a, b) => a.nome.localeCompare(b.nome));
+
   const ausentes = atletasJogo.filter(a=>a.status==='ausente');
   const infoEl = document.getElementById('j-info-ausentes');
   if (ausentes.length) { infoEl.innerHTML=`<strong>${ausentes.length} ausente(s):</strong> `+ausentes.map(a=>a.nome).join(', '); infoEl.style.display=''; }
