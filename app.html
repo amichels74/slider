@@ -9,10 +9,20 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f6;color:#1a1a2e;-webkit-tap-highlight-color:transparent;}
-.app{max-width:480px;margin:0 auto;min-height:100vh;background:white;}
+.app{max-width:1440px;margin:0 auto;min-height:100vh;background:white;}
 .hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:white;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;}
 .hdr h1{font-size:16px;font-weight:700;}
-.nav{display:flex;border-top:1px solid #eee;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:white;z-index:10;}
+.nav{display:flex;border-top:1px solid #eee;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1440px;background:white;z-index:10;}
+/* Jogos two-column layout */
+.jogos-page{padding:0 !important;}
+#jogo-left-col{padding:16px 16px 88px;overflow-y:auto;}
+#jogo-right-panel{display:none;flex:1;padding:24px;background:#f8f8fa;overflow-y:auto;}
+@media(min-width:768px){
+  .jogos-page{display:flex;min-height:calc(100vh - 53px);}
+  #jogo-left-col{width:420px;min-width:320px;flex-shrink:0;border-right:1px solid #eee;min-height:100%;}
+  #jogo-right-panel{display:flex;flex-direction:column;}
+  .modal{max-width:700px;}
+}
 .nav button{flex:1;padding:8px 2px 10px;font-size:9px;background:none;border:none;color:#bbb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;}
 .nav button .ico{font-size:20px;}
 .nav button.active{color:#378ADD;}
@@ -78,16 +88,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
   <div id="page-dash" class="page active"><div class="loading">Carregando...</div></div>
 
-  <div id="page-jogo" class="page">
-    <div id="jogo-lista-view">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <span class="sec" style="margin:0;">Jogos</span>
-        <button class="btn btn-sm" style="background:#378ADD;color:white;border-color:#378ADD;" onclick="abrirFormJogo()">+ Novo</button>
+  <div id="page-jogo" class="page jogos-page">
+    <div id="jogo-left-col">
+      <div id="jogo-lista-view">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span class="sec" style="margin:0;">Jogos</span>
+          <button class="btn btn-sm" style="background:#378ADD;color:white;border-color:#378ADD;" onclick="abrirFormJogo()">+ Novo</button>
+        </div>
+        <select id="j-filtro-mes" onchange="carregarListaJogos()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
+        <div id="jogo-lista-content"><div class="loading">Carregando...</div></div>
       </div>
-      <select id="j-filtro-mes" onchange="carregarListaJogos()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
-      <div id="jogo-lista-content"><div class="loading">Carregando...</div></div>
     </div>
-    <div id="form-jogo" style="display:none;">
+    <div id="jogo-right-panel">
+      <div id="jogo-right-empty" style="text-align:center;color:#ccc;padding:80px 20px;">
+        <div style="font-size:48px;">📋</div>
+        <div style="font-size:14px;margin-top:10px;">Selecione um jogo ou clique em + Novo</div>
+      </div>
+      <div id="jogo-edit-container" style="display:none;max-width:600px;"></div>
+      <div id="form-jogo" style="display:none;max-width:600px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
         <button class="btn btn-sm" onclick="voltarListaJogos()">← Voltar</button>
         <span class="sec" style="margin:0;">Novo jogo</span>
@@ -118,7 +136,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="j-lista-avulsas" style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;min-height:50px;"></div>
       <button class="btn btn-p" onclick="salvarJogo()">💾 Salvar jogo</button>
     </div>
-  </div>
+    </div><!-- /jogo-right-panel -->
+  </div><!-- /page-jogo -->
 
   <div id="page-fech" class="page">
     <select id="fech-mes" onchange="carregarFechamento()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
@@ -269,6 +288,11 @@ function proximosMeses(n) {
 function fecharModal(e) {
   if (!e || e.target===document.getElementById('modal-bg'))
     document.getElementById('modal-bg').style.display='none';
+  // Desktop: clear right panel
+  const ec = document.getElementById('jogo-edit-container');
+  const empty = document.getElementById('jogo-right-empty');
+  if (ec) { ec.style.display='none'; ec.innerHTML=''; }
+  if (empty) empty.style.display='block';
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────
@@ -466,7 +490,12 @@ function toggleMesFerias() {
 }
 
 function abrirFormJogo() {
-  document.getElementById('jogo-lista-view').style.display='none';
+  const desktop = window.innerWidth >= 768;
+  if (!desktop) document.getElementById('jogo-lista-view').style.display='none';
+  const ec = document.getElementById('jogo-edit-container');
+  const empty = document.getElementById('jogo-right-empty');
+  if (ec) { ec.style.display='none'; ec.innerHTML=''; }
+  if (empty) empty.style.display='none';
   document.getElementById('form-jogo').style.display='block';
   document.getElementById('j-data').value = dataHoje();
   selAvulsas.clear();
@@ -484,7 +513,9 @@ function abrirFormJogo() {
 
 function voltarListaJogos() {
   document.getElementById('form-jogo').style.display='none';
-  document.getElementById('jogo-lista-view').style.display='block';
+  const empty = document.getElementById('jogo-right-empty');
+  if (empty) empty.style.display='block';
+  if (window.innerWidth < 768) document.getElementById('jogo-lista-view').style.display='block';
   carregarListaJogos();
 }
 
@@ -555,7 +586,18 @@ async function verJogo(id) {
     presencasPresentes = avulsasPresentes;
   }
 
-  const mb = document.getElementById('modal-body');
+  const desktop = window.innerWidth >= 768;
+  let mb;
+  if (desktop) {
+    const ec = document.getElementById('jogo-edit-container');
+    const empty = document.getElementById('jogo-right-empty');
+    document.getElementById('form-jogo').style.display='none';
+    if (empty) empty.style.display='none';
+    ec.style.display='block'; ec.innerHTML='';
+    mb = ec;
+  } else {
+    mb = document.getElementById('modal-body');
+  }
   mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
   <h2>✏️ Editar jogo</h2>
   <p style="font-size:13px;font-weight:600;color:#aaa;margin-bottom:14px;">${j.camp_nome} · ${fmtD(j.data_jogo)}</p>
@@ -603,7 +645,7 @@ async function verJogo(id) {
 
   window._editAvulsas = new Set([...presencasPresentes].map(String));
   window._editIsFeriasJogo = isFeriasJogo;
-  document.getElementById('modal-bg').style.display='flex';
+  if (!desktop) document.getElementById('modal-bg').style.display='flex';
 }
 
 function toggleAvulsaEdit(id) {
