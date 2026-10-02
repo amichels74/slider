@@ -105,36 +105,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <div style="font-size:14px;margin-top:10px;">Selecione um jogo ou clique em + Novo</div>
       </div>
       <div id="jogo-edit-container" style="display:none;max-width:600px;"></div>
-      <div id="form-jogo" style="display:none;max-width:600px;">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <button class="btn btn-sm" onclick="voltarListaJogos()">← Voltar</button>
-        <span class="sec" style="margin:0;">Novo jogo</span>
-      </div>
-      <div class="inp"><label>Campeonato</label>
-        <select id="j-camp" onchange="carregarAtletasJogo()"></select>
-      </div>
-      <div class="inp"><label>Data do jogo</label><input type="date" id="j-data"></div>
-      <div style="display:flex;gap:8px;">
-        <div class="inp" style="flex:1;"><label>Custo jogo (R$)</label><input type="number" id="j-custo" value="262.50" step="0.5"></div>
-        <div class="inp" style="flex:1;"><label>Técnico (R$)</label><input type="number" id="j-tecnico" value="300.00" step="0.5"></div>
-      </div>
-      <div class="inp"><label>Valor avulsa (R$)</label><input type="number" id="j-avulsa" value="55.00" step="0.5"></div>
-      <div class="inp"><label>Observações</label><input type="text" id="j-obs" placeholder="Opcional"></div>
-      <div style="display:flex;align-items:center;gap:12px;background:#FFF8E6;border-radius:12px;padding:12px 14px;margin-bottom:12px;">
-        <div style="flex:1;">
-          <div style="font-size:14px;font-weight:700;color:#854F0B;">🏖️ Mês de Férias</div>
-          <div style="font-size:12px;color:#aaa;margin-top:2px;">O custo é rateado só entre quem foi ao jogo</div>
+      <div id="form-jogo" style="display:none;width:100%;max-width:640px;padding:0;">
+      <div style="display:flex;align-items:center;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #f0f0f4;">
+        <button class="btn btn-sm" onclick="voltarListaJogos()" style="background:#f4f4f8;border:none;color:#555;padding:7px 14px;border-radius:8px;">← Voltar</button>
+        <div>
+          <div style="font-size:17px;font-weight:700;color:#1a1a2e;">Novo Jogo</div>
+          <div style="font-size:12px;color:#aaa;margin-top:1px;">Preencha os dados e selecione os presentes</div>
         </div>
-        <div class="tog" id="j-ferias-tog" onclick="toggleMesFerias()"></div>
       </div>
-      <div id="j-ferias-info" style="display:none;background:#FFF8E6;border-radius:10px;padding:10px 14px;font-size:13px;color:#854F0B;margin-bottom:10px;">
-        ⚠️ Modo férias ativo: selecione TODAS as atletas que compareceram (mensalistas e avulsas). O custo será dividido apenas entre elas.
+
+      <div style="padding:20px 24px;">
+        <div style="background:#fff;border:1.5px solid #eee;border-radius:16px;padding:18px;margin-bottom:16px;">
+          <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;">Informações do jogo</div>
+          <div class="inp"><label>Campeonato</label>
+            <select id="j-camp" onchange="carregarAtletasJogo()"></select>
+          </div>
+          <div class="inp"><label>Data do jogo</label><input type="date" id="j-data"></div>
+          <div style="display:flex;gap:10px;">
+            <div class="inp" style="flex:1;"><label>Custo jogo (R$)</label><input type="number" id="j-custo" value="262.50" step="0.5"></div>
+            <div class="inp" style="flex:1;"><label>Técnico (R$)</label><input type="number" id="j-tecnico" value="300.00" step="0.5"></div>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div class="inp" style="flex:1;"><label>Valor avulsa (R$)</label><input type="number" id="j-avulsa" value="55.00" step="0.5"></div>
+            <div class="inp" style="flex:1;"><label>Observações</label><input type="text" id="j-obs" placeholder="Opcional"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#FFF8E6,#FFF0D0);border:1.5px solid #F5CFA0;border-radius:16px;padding:14px 18px;margin-bottom:16px;">
+          <div style="font-size:28px;">🏖️</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;color:#854F0B;">Mês de Férias</div>
+            <div style="font-size:12px;color:#B07030;margin-top:2px;">Custo rateado entre os presentes</div>
+          </div>
+          <div class="tog" id="j-ferias-tog" onclick="toggleMesFerias()" style="cursor:pointer;"></div>
+        </div>
+
+        <div id="j-ferias-info" style="display:none;background:#FFF8E6;border:1.5px solid #F5CFA0;border-radius:12px;padding:12px 16px;font-size:13px;color:#854F0B;margin-bottom:16px;">
+          ⚠️ Modo férias ativo: selecione <strong>todas</strong> as atletas que compareceram. O custo será dividido entre elas.
+        </div>
+
+        <div style="background:#fff;border:1.5px solid #eee;border-radius:16px;padding:18px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+            <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;" id="j-sec-atletas">Atletas presentes</div>
+            <div id="j-count-sel" style="font-size:12px;color:#185FA5;font-weight:600;display:none;"></div>
+          </div>
+          <p id="j-txt-atletas" style="font-size:13px;color:#aaa;margin:0 0 12px;">Selecione as avulsas que participaram.</p>
+          <div id="j-info-ausentes" class="info" style="display:none;margin-bottom:10px;"></div>
+          <div id="j-lista-avulsas" style="border:1.5px solid #f0f0f4;border-radius:12px;overflow:hidden;min-height:50px;"></div>
+        </div>
+
+        <button class="btn btn-p" onclick="salvarJogo()" style="width:100%;margin-top:20px;padding:14px;font-size:15px;font-weight:700;border-radius:14px;background:linear-gradient(135deg,#185FA5,#0D4A8A);box-shadow:0 4px 14px rgba(24,95,165,0.3);">Salvar jogo</button>
       </div>
-      <p class="sec" id="j-sec-atletas">Avulsas presentes</p>
-      <p id="j-txt-atletas" style="font-size:13px;color:#aaa;margin-bottom:10px;">Mensalistas pagam o mês independente de terem jogado.</p>
-      <div id="j-info-ausentes" class="info" style="display:none;"></div>
-      <div id="j-lista-avulsas" style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;min-height:50px;"></div>
-      <button class="btn btn-p" onclick="salvarJogo()">💾 Salvar jogo</button>
     </div>
     </div><!-- /jogo-right-panel -->
   </div><!-- /page-jogo -->
@@ -483,7 +504,7 @@ function toggleMesFerias() {
   const txt = document.getElementById('j-txt-atletas');
   if (tog) tog.className = 'tog' + (mesFerias ? ' on' : '');
   if (info) info.style.display = mesFerias ? '' : 'none';
-  if (sec) sec.textContent = mesFerias ? 'Atletas presentes' : 'Avulsas presentes';
+  if (sec) sec.textContent = 'Atletas presentes';
   if (txt) txt.style.display = mesFerias ? 'none' : '';
   selAvulsas.clear();
   carregarAtletasJogo();
@@ -506,7 +527,7 @@ function abrirFormJogo() {
   const txt = document.getElementById('j-txt-atletas');
   if (tog) tog.className = 'tog';
   if (info) info.style.display = 'none';
-  if (sec) sec.textContent = 'Avulsas presentes';
+  if (sec) sec.textContent = 'Atletas presentes';
   if (txt) txt.style.display = '';
   carregarAtletasJogo();
 }
@@ -725,7 +746,7 @@ async function carregarAtletasJogo() {
     return;
   }
 
-  // Modo normal: só avulsas do campeonato selecionado
+  // Modo normal: todas as atletas ativas do campeonato (mensalistas + avulsas)
   const data = await api('atletas.php?camp='+camp);
   atletasJogo = data || [];
   const ausentes = atletasJogo.filter(a=>a.status==='ausente');
@@ -734,14 +755,20 @@ async function carregarAtletasJogo() {
   else infoEl.style.display='none';
 
   {
-    const avulsas = atletasJogo.filter(a=>a.tipo==='avulsa' && a.status==='ativa');
-    document.getElementById('j-lista-avulsas').innerHTML = avulsas.length === 0
-      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma avulsa neste campeonato.</div>'
-      : avulsas.map(a=>`<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
-          <div class="av" style="background:#FAEEDA;color:#854F0B;">${ini(a.nome)}</div>
-          <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div></div>
-          <div class="chk" id="chk-${a.id}"></div>
-        </div>`).join('');
+    const ativas = atletasJogo.filter(a=>a.status==='ativa');
+    document.getElementById('j-lista-avulsas').innerHTML = ativas.length === 0
+      ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta ativa neste campeonato.</div>'
+      : ativas.map(a=>{
+          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
+          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
+          const label = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
+          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
+            <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
+            <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
+              <div style="font-size:11px;color:#999;">${label}</div></div>
+            <div class="chk" id="chk-${a.id}"></div>
+          </div>`;
+        }).join('');
   }
 }
 
@@ -761,7 +788,7 @@ async function salvarJogo() {
     custo_jogo: parseFloat(document.getElementById('j-custo').value)||0,
     custo_tecnico: parseFloat(document.getElementById('j-tecnico').value)||0,
     valor_avulsa: parseFloat(document.getElementById('j-avulsa').value)||55,
-    avulsas_ids: mesFerias ? [] : [...selAvulsas],
+    avulsas_ids: mesFerias ? [] : [...selAvulsas].filter(id => { const a = atletasJogo.find(x=>x.id===id); return !a || a.tipo==='avulsa'; }),
     observacoes: document.getElementById('j-obs').value,
     mes_ferias: mesFerias ? 1 : 0,
     presencas_ids: mesFerias ? [...selAvulsas] : []
