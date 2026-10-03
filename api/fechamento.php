@@ -61,7 +61,7 @@ function rateioPorPresenca($db, $jogo) {
         SELECT p.atleta_id,
                CASE WHEN EXISTS (
                    SELECT 1 FROM inscricoes i
-                   WHERE i.atleta_id = p.atleta_id AND i.campeonato_id = ? AND i.tipo = 'avulsa' AND i.status = 'ativa'
+                   WHERE i.atleta_id = p.atleta_id AND i.campeonato_id = ? AND (i.tipo = 'avulsa' OR i.status = 'ausente')
                ) THEN 'avulsa' ELSE 'mensalista' END AS tipo_insc
         FROM participacoes p
         WHERE p.jogo_id = ? AND p.tipo = 'ferias'
