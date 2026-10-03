@@ -138,6 +138,7 @@ foreach ($camps as $camp) {
     // Cobranças de férias — avulsas pagam valor_avulsa, restante divide entre os demais
     $ferias = [];
     foreach ($jogosFerias as $jf) {
+        $dataJogo = date('d/m', strtotime($jf['data_jogo']));
         $stmtPres = $db->prepare("
             SELECT p.atleta_id, a.nome,
                    CASE WHEN EXISTS (
@@ -162,13 +163,15 @@ foreach ($camps as $camp) {
 
         foreach ($avulsasJogo as $pr) {
             $aid = $pr['atleta_id'];
-            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'tipo' => 'Férias (avulsa)', 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago']];
+            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'tipo' => 'Férias (avulsa)', 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago'], 'jogos' => []];
             $ferias[$aid]['total'] += $valorAvulsa;
+            $ferias[$aid]['jogos'][] = $dataJogo;
         }
         foreach ($naoAvulsas as $pr) {
             $aid = $pr['atleta_id'];
-            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'tipo' => 'Férias (rateio)', 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago']];
+            if (!isset($ferias[$aid])) $ferias[$aid] = ['nome' => $pr['nome'], 'total' => 0, 'tipo' => 'Férias (rateio)', 'pago' => isset($pagoMap[$aid]) && $pagoMap[$aid]['pago'], 'jogos' => []];
             $ferias[$aid]['total'] += $parteResto;
+            $ferias[$aid]['jogos'][] = $dataJogo;
         }
     }
     $ferias = array_values($ferias);
@@ -304,11 +307,12 @@ tr:last-child td { border-bottom: none; }
 
     <?php if (!empty($c['ferias'])): ?>
     <table style="margin-top:<?= (!empty($c['mensalistas']) || !empty($c['avulsas'])) ? '12px' : '0' ?>;">
-        <tr><th class="th-ferias" colspan="4">🏖️ Mês de Férias — Rateio por presença</th></tr>
-        <tr><th>Atleta</th><th>Tipo</th><th>Valor</th><th>Status</th></tr>
+        <tr><th class="th-ferias" colspan="5">🏖️ Mês de Férias — Rateio por presença</th></tr>
+        <tr><th>Atleta</th><th>Jogos</th><th>Tipo</th><th>Valor</th><th>Status</th></tr>
         <?php foreach ($c['ferias'] as $f): ?>
         <tr>
             <td><?= htmlspecialchars($f['nome']) ?></td>
+            <td style="color:#555;font-size:11px;"><?= implode(', ', $f['jogos'] ?? []) ?></td>
             <td>Férias</td>
             <td><?= R($f['total']) ?></td>
             <td class="<?= $f['pago'] ? 'pago' : 'pendente' ?>"><?= $f['pago'] ? '✅ Pago' : '❌ Pendente' ?></td>
