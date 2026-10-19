@@ -2342,10 +2342,12 @@ async function verAtletasInativas() {
 }
 
 async function reativarAtleta(id, nome) {
+  const data = await vPickDate(`Data de retorno de ${nome}`, dataHoje());
+  if (!data) return;
   const atletas = todosAtletas.length ? todosAtletas : await api('atletas.php') || [];
   const a = atletas.find(x=>x.id===id); if (!a) return;
   for (const ins of (a.inscricoes||[])) {
-    await api('atletas.php','PUT',{atleta_id:id,campeonato_id:ins.campeonato_id,status:'ativa',status_desde:dataHoje()});
+    await api('atletas.php','PUT',{atleta_id:id,campeonato_id:ins.campeonato_id,status:'ativa',status_desde:data,retorno_desde:data});
   }
   const row = document.getElementById('inat-row-'+id);
   if (row) row.remove();
