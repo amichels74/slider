@@ -175,7 +175,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .grid-tipo.mensalista{background:var(--blue-l);color:var(--blue);}
 .grid-tipo.avulsa{background:#FEF3C7;color:#92400E;}
 .grid-tipo.nao{background:#f3f4f6;color:#9ca3af;}
+.grid-tipo.afastada{background:#FFF3CD;color:#856404;}
 .grid-tipo:hover{filter:brightness(.92);}
+.grid-tipo-sel{display:inline-block;min-width:90px;padding:4px 6px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;text-align:center;appearance:none;-webkit-appearance:none;}
 
 /* ── MISC ── */
 .empty{text-align:center;padding:40px 20px;color:#bbb;font-size:14px;}
@@ -393,7 +395,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="custom-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;padding:20px;">
   <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:24px 20px;width:calc(100% - 40px);max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
     <div style="font-size:13px;font-weight:700;color:#1a3f8f;margin-bottom:8px;">🏐 Vôlei Master</div>
-    <div id="dialog-msg" style="font-size:15px;color:#1a1a2e;margin-bottom:20px;line-height:1.5;white-space:pre-line;"></div>
+    <div id="dialog-msg" style="font-size:15px;color:#1a1a2e;margin-bottom:12px;line-height:1.5;white-space:pre-line;"></div>
+    <div id="dialog-extra" style="margin-bottom:16px;"></div>
     <div id="dialog-btns" style="display:flex;gap:10px;justify-content:flex-end;"></div>
   </div>
 </div>
@@ -1525,6 +1528,7 @@ function abrirGerenciar(id) {
   </div>`:''}
   <div style="margin-top:8px;border-top:1px solid #f0f0f0;padding-top:12px;display:flex;flex-direction:column;gap:8px;">
     <button class="btn" style="width:100%;color:#185FA5;border-color:#B5D4F4;" onclick="verHistoricoStatus('${a.id}','${a.nome}')">📋 Histórico de situações</button>
+    <button class="btn" style="width:100%;color:#856404;border-color:#FFC107;" onclick="inativarAtleta('${a.id}','${a.nome}')">⏸️ Inativar atleta (saiu do grupo)</button>
     <button class="btn" style="width:100%;color:#A32D2D;border-color:#A32D2D;" onclick="excluirAtleta('${a.id}','${a.nome}')">🗑️ Excluir atleta do sistema</button>
   </div>
   <button class="btn btn-p" onclick="salvarGerenciar('${a.id}')">Salvar alterações</button>`;
@@ -2109,11 +2113,18 @@ async function renderAtlGrid() {
 
   const tbody = ativas.map(a => {
     const cells = camps.map(c => {
-      const insc = (a.inscricoes||[]).find(i=>i.campeonato_id===c.id);
-      const tipo = insc ? insc.tipo : 'nao';
-      const label = tipo==='mensalista'?'Mensalista':tipo==='avulsa'?'Avulsa':tipo==='organizadora'?'Org.':'—';
+      const insc = (a.inscricoes||[]).find(i=>i.campeonato_id===c.id && i.status !== 'inativa');
+      const estado = !insc ? 'nao' : insc.status === 'ausente' ? 'afastada' : insc.tipo;
+      const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#FEF3C7;color:#92400E;', afastada:'background:#FFF3CD;color:#856404;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+      const cor = cores[estado] || cores.nao;
       return `<td style="text-align:center;">
-        <button class="grid-tipo ${tipo}" onclick="toggleGridTipo('${a.id}','${c.id}','${tipo}')">${label}</button>
+        <select class="grid-tipo-sel" style="${cor}" onchange="mudarGridEstado('${a.id}','${c.id}','${estado}',this.value,this)">
+          <option value="nao"   ${estado==='nao'?'selected':''}>—</option>
+          <option value="mensalista" ${estado==='mensalista'?'selected':''}>Mensalista</option>
+          <option value="avulsa"     ${estado==='avulsa'?'selected':''}>Avulsa</option>
+          <option value="afastada"   ${estado==='afastada'?'selected':''}>Afastada</option>
+          <option value="organizadora" ${estado==='organizadora'?'selected':''}>Org.</option>
+        </select>
       </td>`;
     }).join('');
     return `<tr>
@@ -2130,20 +2141,49 @@ async function renderAtlGrid() {
   el.innerHTML = `<div class="atl-grid-wrap"><table class="atl-grid"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
 }
 
-async function toggleGridTipo(atletaId, campId, tipoAtual) {
-  const ciclo = {mensalista:'avulsa', avulsa:'nao', nao:'mensalista', organizadora:'mensalista'};
-  const novoTipo = ciclo[tipoAtual] || 'mensalista';
+async function mudarGridEstado(atletaId, campId, estadoAtual, novoEstado, selEl) {
+  if (novoEstado === estadoAtual) return;
 
-  if (novoTipo === 'nao') {
-    if (!await vConfirmDelete(`Remover esta atleta do campeonato?`)) return;
-    // Remove inscrição — chama endpoint de remover do campeonato
+  const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#FEF3C7;color:#92400E;', afastada:'background:#FFF3CD;color:#856404;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+
+  const revert = () => { selEl.value = estadoAtual; selEl.style.cssText = cores[estadoAtual]||cores.nao; };
+
+  if (novoEstado === 'nao') {
+    if (!await vConfirmDelete('Remover esta atleta do campeonato?')) { revert(); return; }
     await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,status:'inativa',status_desde:dataHoje()});
-  } else if (tipoAtual === 'nao') {
-    await api('atletas.php','POST',{atleta_id:atletaId,campeonato_id:campId,tipo:novoTipo});
+
+  } else if (estadoAtual === 'nao') {
+    const tipo = novoEstado === 'afastada' ? 'mensalista' : novoEstado;
+    await api('atletas.php','POST',{atleta_id:atletaId,campeonato_id:campId,tipo});
+    if (novoEstado === 'afastada') {
+      const data = await vPickDate('Data de início do afastamento', dataHoje());
+      if (!data) { revert(); return; }
+      await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,status:'ausente',status_desde:data});
+    }
+
+  } else if (novoEstado === 'afastada') {
+    const data = await vPickDate('Data de início do afastamento', dataHoje());
+    if (!data) { revert(); return; }
+    await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,status:'ausente',status_desde:data});
+
+  } else if (estadoAtual === 'afastada') {
+    const data = await vPickDate('Data de retorno da atleta', dataHoje());
+    if (!data) { revert(); return; }
+    await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,status:'ativa',retorno_desde:data,status_desde:data});
+    if (novoEstado !== 'mensalista') {
+      const mes = await vPickMes(`A partir de quando passa a ser ${novoEstado==='avulsa'?'Avulsa':'Org.'}?`);
+      if (mes) await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,tipo_novo:novoEstado,mes_vigencia:mes});
+    }
+
   } else {
-    const mesAtual = new Date().toISOString().slice(0,7);
-    await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,tipo_novo:novoTipo,mes_vigencia:mesAtual});
+    // Troca de tipo (mensalista ↔ avulsa ↔ organizadora)
+    const label = novoEstado==='avulsa'?'Avulsa':novoEstado==='organizadora'?'Org.':'Mensalista';
+    const mes = await vPickMes(`A partir de quando passa a ser ${label}?`);
+    if (!mes) { revert(); return; }
+    await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,tipo_novo:novoEstado,mes_vigencia:mes});
   }
+
+  selEl.style.cssText = cores[novoEstado]||cores.nao;
   await carregarAtletas();
   renderAtlGrid();
 }
@@ -2157,6 +2197,20 @@ Isso remove o cadastro completo. Histórico de cobranças é mantido.`)) return;
   const res = await api('atletas.php', 'DELETE', { atleta_id: id });
   if (res && res.ok) { fecharModal(); carregarAtletas(); await vAlert('Atleta excluída.'); }
   else await vAlert(res?.erro || 'Erro ao excluir.');
+}
+
+async function inativarAtleta(id, nome) {
+  if (!await vConfirm(`Inativar "${nome}"?\n\nEla sairá da lista ativa e ficará em "Inativas". O histórico de cobranças é mantido.`)) return;
+  const a = todosAtletas.find(x=>x.id===id); if (!a) return;
+  const desde = dataHoje();
+  for (const ins of (a.inscricoes||[])) {
+    if (ins.status !== 'inativa') {
+      await api('atletas.php','PUT',{atleta_id:id,campeonato_id:ins.campeonato_id,status:'inativa',status_desde:desde});
+    }
+  }
+  fecharModal();
+  await carregarAtletas();
+  await vAlert(`${nome} foi inativada.`);
 }
 
 // ── CUSTOM DIALOG ────────────────────────────────────
@@ -2202,6 +2256,64 @@ function vConfirmDelete(msg) {
       { label:'Cancelar', action: () => resolve(false) },
       { label:'Excluir', danger:true, action: () => resolve(true) }
     ]);
+  });
+}
+
+function vPickDate(msg, defaultVal) {
+  return new Promise(resolve => {
+    document.getElementById('dialog-msg').textContent = msg;
+    const extra = document.getElementById('dialog-extra');
+    extra.innerHTML = `<input type="date" id="dlg-date-input" value="${defaultVal||dataHoje()}"
+      style="width:100%;padding:10px;font-size:15px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafafa;">`;
+    const btnsEl = document.getElementById('dialog-btns');
+    btnsEl.innerHTML = '';
+    const cancel = document.createElement('button');
+    cancel.textContent = 'Cancelar'; cancel.className = 'btn';
+    cancel.style.cssText = 'padding:10px 20px;';
+    cancel.onclick = () => { extra.innerHTML=''; hideDialog(); resolve(null); };
+    const ok = document.createElement('button');
+    ok.textContent = 'Confirmar'; ok.className = 'btn btn-p';
+    ok.style.cssText = 'margin-top:0;width:auto;padding:10px 20px;';
+    ok.onclick = () => {
+      const v = document.getElementById('dlg-date-input').value;
+      extra.innerHTML=''; hideDialog(); resolve(v||null);
+    };
+    btnsEl.appendChild(cancel); btnsEl.appendChild(ok);
+    document.getElementById('custom-dialog').style.display = 'block';
+  });
+}
+
+function vPickMes(msg) {
+  return new Promise(resolve => {
+    const meses = [];
+    const now = new Date();
+    for (let i = -3; i <= 3; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      const val = d.toISOString().slice(0,7);
+      const label = d.toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+      meses.push({val, label, cur: i===0});
+    }
+    document.getElementById('dialog-msg').textContent = msg;
+    const extra = document.getElementById('dialog-extra');
+    extra.innerHTML = `<select id="dlg-mes-input"
+      style="width:100%;padding:10px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:8px;background:#fafafa;">
+      ${meses.map(m=>`<option value="${m.val}"${m.cur?' selected':''}>${m.label}</option>`).join('')}
+    </select>`;
+    const btnsEl = document.getElementById('dialog-btns');
+    btnsEl.innerHTML = '';
+    const cancel = document.createElement('button');
+    cancel.textContent = 'Cancelar'; cancel.className = 'btn';
+    cancel.style.cssText = 'padding:10px 20px;';
+    cancel.onclick = () => { extra.innerHTML=''; hideDialog(); resolve(null); };
+    const ok = document.createElement('button');
+    ok.textContent = 'Confirmar'; ok.className = 'btn btn-p';
+    ok.style.cssText = 'margin-top:0;width:auto;padding:10px 20px;';
+    ok.onclick = () => {
+      const v = document.getElementById('dlg-mes-input').value;
+      extra.innerHTML=''; hideDialog(); resolve(v||null);
+    };
+    btnsEl.appendChild(cancel); btnsEl.appendChild(ok);
+    document.getElementById('custom-dialog').style.display = 'block';
   });
 }
 
