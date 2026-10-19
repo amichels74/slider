@@ -1843,16 +1843,38 @@ async function toggleParcelaSem(parcelaId, pago, campId) {
   verDetalhesSemestral(campId);
 }
 
+// Gera ID a partir do nome: remove acentos, espaços → camelCase
+function gerarIdDeCamp(nome) {
+  return nome.normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-zA-Z0-9\s]/g,'').trim()
+    .split(/\s+/).map((w,i)=> i===0 ? w.toLowerCase() : w[0].toUpperCase()+w.slice(1).toLowerCase())
+    .join('');
+}
+
 async function abrirNovoCampeonato(tipo) {
   tipo = tipo || 'mensal';
-  const atletas = await api('atletas.php') || [];
-  const ativas = atletas.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status==='ativa'));
+  const [atletas, camps] = await Promise.all([api('atletas.php'), api('campeonatos.php')]);
+  const todasAtivas = (atletas||[]).filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status==='ativa'));
+  window._todasAtivasNovoCamp = todasAtivas;
   const mb = document.getElementById('modal-body');
 
+  // Select "basear em campeonato" para pré-filtrar atletas
+  const campOpts = (camps||[]).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+
   const camposBase = `
-  <div class="inp"><label>Nome</label><input type="text" id="nc-nome" placeholder="Ex: CIL Segunda"></div>
+  <div class="inp"><label>Nome</label>
+    <input type="text" id="nc-nome" placeholder="Ex: Bivolt 2026-2"
+      oninput="document.getElementById('nc-id').value=gerarIdDeCamp(this.value)">
+  </div>
   <div class="inp"><label>Local</label><input type="text" id="nc-local" placeholder="Ex: CIL, Bivolt..."></div>
-  <div class="inp"><label>ID (sem espaços)</label><input type="text" id="nc-id" placeholder="Ex: cilSegunda"></div>`;
+  <div class="inp"><label>ID (preenchido automático)</label><input type="text" id="nc-id" placeholder="Gerado pelo nome"></div>
+  <div class="inp">
+    <label>Basear atletas em campeonato existente</label>
+    <select id="nc-base-camp" onchange="filtrarAtletasNovoCamp()">
+      <option value="">— Selecione para filtrar —</option>
+      ${campOpts}
+    </select>
+  </div>`;
 
   const camposSemestral = tipo==='semestral' ? `
   <div style="background:#fffbe6;border:1.5px solid #f5b800;border-radius:12px;padding:14px;margin-bottom:12px;">
@@ -1890,25 +1912,48 @@ async function abrirNovoCampeonato(tipo) {
 
   const listaAtletas = `
   <p class="sec">Atletas participantes</p>
-  <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;max-height:300px;overflow-y:auto;">
-  ${ativas.map(a=>`<div class="row" style="gap:10px;">
-    <div class="av" style="${avS(a.inscricoes[0]?.tipo||'mensalista')}">${ini(a.nome)}</div>
-    <div style="flex:1;font-size:13px;font-weight:500;">${a.nome}</div>
-    <select id="nc-tipo-${a.id}" style="font-size:12px;padding:4px 6px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;">
-      <option value="nao">Não</option>
-      <option value="mensalista">Mensalista</option>
-      <option value="avulsa">Avulsa</option>
-      <option value="organizadora">Organizadora</option>
-    </select>
-  </div>`).join('')}
+  <div id="nc-atletas-lista" style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;max-height:300px;overflow-y:auto;">
+    <p style="text-align:center;color:#aaa;padding:20px;font-size:13px;margin:0;">Selecione um campeonato acima para ver as atletas.</p>
   </div>`;
 
   mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
   <h2>${tipo==='semestral'?'🏅 Novo campeonato semestral':'🏆 Novo campeonato mensal'}</h2>
   ${camposBase}${camposSemestral}${listaAtletas}
   <button class="btn btn-p" onclick="salvarNovoCampeonato('${tipo}')">Criar campeonato</button>`;
-  window._novoCampAtletas = ativas.map(a=>a.id);
+  window._novoCampAtletas = [];
   document.getElementById('modal-bg').style.display='flex';
+}
+
+function filtrarAtletasNovoCamp() {
+  const campId = document.getElementById('nc-base-camp').value;
+  const el = document.getElementById('nc-atletas-lista');
+  if (!campId) {
+    el.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;font-size:13px;margin:0;">Selecione um campeonato acima para ver as atletas.</p>';
+    window._novoCampAtletas = [];
+    return;
+  }
+  const filtradas = (window._todasAtivasNovoCamp||[]).filter(a=>
+    (a.inscricoes||[]).some(i=>String(i.campeonato_id)===String(campId)&&i.status==='ativa')
+  );
+  window._novoCampAtletas = filtradas.map(a=>a.id);
+  if (filtradas.length === 0) {
+    el.innerHTML = '<p style="text-align:center;color:#aaa;padding:20px;font-size:13px;margin:0;">Nenhuma atleta inscrita neste campeonato.</p>';
+    return;
+  }
+  el.innerHTML = filtradas.map(a=>{
+    const insc = (a.inscricoes||[]).find(i=>String(i.campeonato_id)===String(campId)&&i.status==='ativa');
+    const t = insc ? insc.tipo : 'mensalista';
+    return `<div class="row" style="gap:10px;">
+      <div class="av" style="${avS(t)}">${ini(a.nome)}</div>
+      <div style="flex:1;font-size:13px;font-weight:500;">${a.nome}</div>
+      <select id="nc-tipo-${a.id}" style="font-size:12px;padding:4px 6px;border:1px solid #e8e8e8;border-radius:6px;background:#fafafa;">
+        <option value="nao">Não</option>
+        <option value="mensalista"${t==='mensalista'?' selected':''}>Mensalista</option>
+        <option value="avulsa"${t==='avulsa'?' selected':''}>Avulsa</option>
+        <option value="organizadora"${t==='organizadora'?' selected':''}>Organizadora</option>
+      </select>
+    </div>`;
+  }).join('');
 }
 
 async function salvarNovoCampeonato(tipo) {
