@@ -8,69 +8,158 @@
 <!-- v2.3 -->
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f6;color:#1a1a2e;-webkit-tap-highlight-color:transparent;}
-.app{max-width:1440px;margin:0 auto;min-height:100vh;background:white;}
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:white;border-bottom:1px solid #eee;position:sticky;top:0;z-index:10;}
-.hdr h1{font-size:16px;font-weight:700;}
-.nav{display:flex;border-top:1px solid #eee;position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1440px;background:white;z-index:10;}
-/* Jogos two-column layout */
+:root{
+  --blue:#1a3f8f;--blue-d:#122d68;--blue-m:#2455b3;--blue-l:#e8eef8;
+  --yellow:#f5b800;--yellow-l:#fffbe6;
+  --green:#1D9E75;--red:#A32D2D;
+  --bg:#f0f2f6;--text:#1a1a2e;--muted:#6b7280;
+  --border:#e5e7eb;--white:#fff;
+  --nav-w:230px;--hdr-h:58px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;}
+
+/* ── SHELL ── */
+.app{max-width:1440px;margin:0 auto;min-height:100vh;background:var(--bg);}
+
+/* ── HEADER (mobile top bar) ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:var(--hdr-h);background:var(--blue);color:white;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(26,63,143,.25);}
+.hdr h1{font-size:17px;font-weight:800;color:white;letter-spacing:-.3px;}
+.hdr h1 em{color:var(--yellow);font-style:normal;}
+.hdr-right{display:flex;align-items:center;gap:8px;}
+#hdr-nome{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;}
+.hdr .btn-sair{padding:5px 13px;font-size:12px;font-weight:700;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:20px;cursor:pointer;transition:background .15s;}
+.hdr .btn-sair:hover{background:rgba(255,255,255,.25);}
+
+/* ── BOTTOM NAV (mobile) ── */
+.nav{display:flex;border-top:3px solid var(--blue);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1440px;background:white;z-index:30;box-shadow:0 -2px 12px rgba(26,63,143,.12);}
+.nav button{flex:1;padding:7px 2px 9px;font-size:9px;background:none;border:none;color:#9ca3af;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600;transition:color .15s;}
+.nav button .ico{font-size:20px;line-height:1.1;}
+.nav button.active{color:var(--blue);}
+
+/* ── PAGES ── */
+.page{display:none;padding:16px 16px 90px;}
+.page.active{display:block;}
+
+/* ── JOGOS 2-COL ── */
 .jogos-page{padding:0 !important;}
-#jogo-left-col{padding:16px 16px 88px;overflow-y:auto;}
-#jogo-right-panel{display:none;flex:1;padding:24px;background:#f8f8fa;overflow-y:auto;}
+#jogo-left-col{padding:16px 16px 90px;overflow-y:auto;}
+#jogo-right-panel{display:none;flex:1;padding:24px;background:var(--bg);overflow-y:auto;}
+
+/* ── DESKTOP SIDEBAR ── */
 @media(min-width:768px){
-  #page-jogo.active{display:flex !important;min-height:calc(100vh - 53px);}
-  #jogo-left-col{width:420px;min-width:320px;flex-shrink:0;border-right:1px solid #eee;min-height:100%;max-height:calc(100vh - 53px);overflow-y:auto;}
-  #jogo-right-panel{display:flex !important;flex-direction:column;flex:1;min-height:calc(100vh - 53px);overflow-y:auto;}
+  .hdr{display:none;}
+  .nav{
+    position:fixed;top:0;left:50%;transform:translateX(-50%);
+    width:var(--nav-w);max-width:var(--nav-w);
+    height:100vh;
+    flex-direction:column;align-items:stretch;justify-content:flex-start;
+    border-top:none;border-right:1px solid rgba(255,255,255,.08);
+    background:var(--blue);
+    box-shadow:3px 0 20px rgba(26,63,143,.3);
+    overflow-y:auto;padding-top:0;
+  }
+  .nav-brand{
+    display:flex;align-items:center;gap:10px;
+    height:var(--hdr-h);padding:0 20px;
+    font-size:17px;font-weight:800;color:white;
+    border-bottom:1px solid rgba(255,255,255,.15);
+    flex-shrink:0;letter-spacing:-.3px;
+  }
+  .nav-brand em{color:var(--yellow);font-style:normal;}
+  .nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;padding:18px 20px 6px;}
+  .nav button{
+    flex:none;flex-direction:row;justify-content:flex-start;
+    gap:12px;padding:12px 20px;
+    font-size:13px;font-weight:600;
+    color:rgba(255,255,255,.7);
+    border-radius:0;text-align:left;
+    transition:background .15s,color .15s;
+  }
+  .nav button .ico{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
+  .nav button:hover{background:rgba(255,255,255,.09);color:white;}
+  .nav button.active{background:var(--yellow);color:var(--blue) !important;font-weight:700;}
+  .nav-footer{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.12);}
+  .nav-user{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;font-weight:500;}
+  .nav-user span{display:block;font-size:13px;color:rgba(255,255,255,.85);font-weight:700;}
+  .nav-sair{width:100%;padding:9px;font-size:12px;font-weight:700;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;transition:background .15s;}
+  .nav-sair:hover{background:rgba(255,255,255,.2);}
+
+  /* Push all pages right of sidebar */
+  .page{margin-left:var(--nav-w);min-height:100vh;padding-top:24px;padding-bottom:32px;}
+  #page-jogo.active{display:flex !important;margin-left:var(--nav-w);min-height:100vh;}
+  #jogo-left-col{width:420px;min-width:320px;flex-shrink:0;border-right:1px solid var(--border);max-height:100vh;overflow-y:auto;padding-bottom:32px;}
+  #jogo-right-panel{display:flex !important;flex-direction:column;flex:1;max-height:100vh;overflow-y:auto;}
   .modal{max-width:700px;}
 }
-.nav button{flex:1;padding:8px 2px 10px;font-size:9px;background:none;border:none;color:#bbb;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;}
-.nav button .ico{font-size:20px;}
-.nav button.active{color:#378ADD;}
-.page{display:none;padding:16px 16px 88px;}
-.page.active{display:block;}
-.sec{font-size:11px;font-weight:600;color:#bbb;text-transform:uppercase;letter-spacing:.06em;margin:18px 0 8px;}
-.card{background:white;border:1px solid #eee;border-radius:14px;padding:14px 16px;margin-bottom:10px;}
-.flat{background:#f8f8fa;border-radius:14px;padding:14px 16px;margin-bottom:10px;}
-.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
-.bb{background:#E6F1FB;color:#185FA5;} .ba{background:#FAEEDA;color:#854F0B;}
-.br{background:#FCEBEB;color:#A32D2D;} .bg{background:#EAF3DE;color:#3B6D11;}
-.bgr{background:#f0f0f2;color:#666;}
-.btn{padding:10px 18px;border-radius:10px;font-size:14px;cursor:pointer;border:1px solid #ddd;background:white;color:#1a1a2e;font-weight:500;}
-.btn:active{opacity:.8;}
-.btn-p{background:#378ADD;color:white;border-color:#378ADD;width:100%;padding:13px;font-size:15px;font-weight:700;margin-top:12px;border-radius:12px;}
-.btn-g{background:#1D9E75;color:white;border-color:#1D9E75;}
+
+/* ── CARDS ── */
+.card{background:white;border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 5px rgba(0,0,0,.05);}
+.flat{background:var(--blue-l);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+
+/* ── SECTION LABEL ── */
+.sec{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 8px;}
+
+/* ── BADGES ── */
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:700;}
+.bb{background:var(--blue-l);color:var(--blue);}
+.ba{background:#FEF3C7;color:#92400E;}
+.br{background:#FEE2E2;color:var(--red);}
+.bg{background:#D1FAE5;color:#065F46;}
+.bgr{background:#f3f4f6;color:var(--muted);}
+
+/* ── BUTTONS ── */
+.btn{padding:10px 18px;border-radius:10px;font-size:14px;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--text);font-weight:600;transition:opacity .15s,box-shadow .15s;}
+.btn:active{opacity:.75;}
+.btn-p{background:var(--blue);color:white;border-color:var(--blue);width:100%;padding:13px;font-size:15px;font-weight:700;margin-top:12px;border-radius:12px;box-shadow:0 4px 14px rgba(26,63,143,.25);}
+.btn-p:hover{background:var(--blue-m);}
+.btn-g{background:var(--green);color:white;border-color:var(--green);}
+.btn-y{background:var(--yellow);color:var(--blue);border-color:var(--yellow);font-weight:700;}
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+
+/* ── FORM INPUTS ── */
 .inp{margin-bottom:12px;}
-.inp label{display:block;font-size:12px;color:#666;margin-bottom:5px;font-weight:500;}
-.inp input,.inp select{width:100%;padding:10px 12px;font-size:15px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;outline:none;}
-.inp input:focus,.inp select:focus{border-color:#378ADD;background:white;}
+.inp label{display:block;font-size:11px;color:var(--muted);margin-bottom:5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.inp input,.inp select{width:100%;padding:10px 12px;font-size:15px;border:1.5px solid var(--border);border-radius:10px;background:#fafafa;color:var(--text);outline:none;}
+.inp input:focus,.inp select:focus{border-color:var(--blue);background:white;box-shadow:0 0 0 3px rgba(26,63,143,.08);}
+
+/* ── LIST ROWS ── */
 .row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid #f0f0f0;gap:10px;}
 .row:last-child{border-bottom:none;}
 .av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+
+/* ── TOGGLE ── */
 .tog{width:44px;height:26px;border-radius:13px;background:#ddd;position:relative;cursor:pointer;flex-shrink:0;transition:background .2s;}
-.tog.on{background:#1D9E75;}
+.tog.on{background:var(--green);}
 .tog::after{content:'';position:absolute;width:22px;height:22px;border-radius:50%;background:white;top:2px;left:2px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
 .tog.on::after{left:20px;}
-.chk{width:24px;height:24px;border:2px solid #ddd;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:14px;font-weight:700;}
-.chk.on{background:#378ADD;border-color:#378ADD;color:white;}
+
+/* ── CHECKBOX ── */
+.chk{width:24px;height:24px;border:2px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:14px;font-weight:700;}
+.chk.on{background:var(--blue);border-color:var(--blue);color:white;}
+
+/* ── STAT ROWS ── */
 .sr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:14px;}
-.sl{color:#999;} .sv{font-weight:600;}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
+.sl{color:var(--muted);} .sv{font-weight:700;}
+
+/* ── MODAL ── */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
 .modal{background:white;border-radius:20px 20px 0 0;padding:24px 18px 40px;width:100%;max-width:480px;max-height:88vh;overflow-y:auto;}
-.modal h2{font-size:17px;font-weight:700;margin-bottom:16px;}
+.modal h2{font-size:17px;font-weight:800;margin-bottom:16px;color:var(--blue);}
 .close{float:right;background:none;border:none;font-size:24px;color:#bbb;cursor:pointer;line-height:1;}
-.empty{text-align:center;padding:40px 20px;color:#ccc;font-size:14px;}
+
+/* ── MISC ── */
+.empty{text-align:center;padding:40px 20px;color:#bbb;font-size:14px;}
 .empty span{font-size:36px;display:block;margin-bottom:10px;}
-.divider{height:1px;background:#f0f0f0;margin:10px 0;}
+.divider{height:1px;background:var(--border);margin:10px 0;}
 .msg-box{background:#f8f8fa;border-radius:12px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;max-height:250px;overflow-y:auto;color:#333;margin-top:12px;}
-.loading{text-align:center;padding:40px;color:#ccc;font-size:14px;}
-.info{background:#FFF8E6;border-radius:10px;padding:10px 14px;font-size:13px;color:#854F0B;margin-bottom:12px;line-height:1.5;}
-.prog{height:8px;background:#eee;border-radius:4px;overflow:hidden;margin:8px 0 4px;}
-.prog-fill{height:100%;background:#1D9E75;border-radius:4px;transition:width .4s;}
+.loading{text-align:center;padding:40px;color:#bbb;font-size:14px;}
+.info{background:var(--yellow-l);border-radius:10px;padding:10px 14px;font-size:13px;color:#92400E;margin-bottom:12px;line-height:1.5;border-left:3px solid var(--yellow);}
+.prog{height:8px;background:#e5e7eb;border-radius:4px;overflow:hidden;margin:8px 0 4px;}
+.prog-fill{height:100%;background:var(--green);border-radius:4px;transition:width .4s;}
 </style>
 
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#378ADD">
+  <meta name="theme-color" content="#1a3f8f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Vôlei Master">
@@ -79,10 +168,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 <div class="app">
   <div class="hdr">
-    <h1>🏐 Vôlei Cobranças</h1>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <span style="font-size:12px;color:#aaa;" id="hdr-nome"></span>
-      <button class="btn btn-sm" onclick="logout()" style="font-size:11px;padding:5px 10px;">Sair</button>
+    <h1>🏐 Vôlei <em>Cobranças</em></h1>
+    <div class="hdr-right">
+      <span id="hdr-nome"></span>
+      <button class="btn-sair" onclick="logout()">Sair</button>
     </div>
   </div>
 
@@ -93,7 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div id="jogo-lista-view">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <span class="sec" style="margin:0;">Jogos</span>
-          <button class="btn btn-sm" style="background:#378ADD;color:white;border-color:#378ADD;" onclick="abrirFormJogo()">+ Novo</button>
+          <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirFormJogo()">+ Novo</button>
         </div>
         <select id="j-filtro-mes" onchange="carregarListaJogos()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
         <div id="jogo-lista-content"><div class="loading">Carregando...</div></div>
@@ -154,7 +243,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           <div id="j-lista-avulsas" style="border:1.5px solid #f0f0f4;border-radius:12px;overflow:hidden;min-height:50px;"></div>
         </div>
 
-        <button class="btn btn-p" onclick="salvarJogo()" style="width:100%;margin-top:20px;padding:14px;font-size:15px;font-weight:700;border-radius:14px;background:linear-gradient(135deg,#185FA5,#0D4A8A);box-shadow:0 4px 14px rgba(24,95,165,0.3);">Salvar jogo</button>
+        <button class="btn btn-p" onclick="salvarJogo()" style="width:100%;margin-top:20px;padding:14px;font-size:15px;font-weight:700;border-radius:14px;background:linear-gradient(135deg,#1a3f8f,#122d68);box-shadow:0 4px 14px rgba(26,63,143,0.3);">💾 Salvar jogo</button>
       </div>
     </div>
     </div><!-- /jogo-right-panel -->
@@ -164,7 +253,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <select id="fech-mes" onchange="carregarFechamento()" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;color:#1a1a2e;margin-bottom:12px;"></select>
     <div id="fech-preview"><div class="loading">Calculando...</div></div>
     <div style="display:flex;gap:8px;margin:14px 0 10px;">
-      <button class="btn" id="tab-pend" onclick="fechTab('pend')" style="flex:1;background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;">Pendentes</button>
+      <button class="btn" id="tab-pend" onclick="fechTab('pend')" style="flex:1;background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">Pendentes</button>
       <button class="btn" id="tab-pago" onclick="fechTab('pago')" style="flex:1;">Pagos</button>
     </div>
     <div id="fech-content"></div>
@@ -173,10 +262,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="page-atl" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;">
       <span class="sec" style="margin:0;">Atletas</span>
-      <button class="btn btn-sm" onclick="abrirNovaAtleta()">+ Nova</button>
+      <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovaAtleta()">+ Nova</button>
     </div>
     <div style="display:flex;gap:6px;margin:10px 0 14px;flex-wrap:wrap;">
-      <button class="btn btn-sm" id="at-todas"       onclick="filtrarAtletas('todas')"       style="background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;">Todas</button>
+      <button class="btn btn-sm" id="at-todas"       onclick="filtrarAtletas('todas')"       style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">Todas</button>
       <button class="btn btn-sm" id="at-avulsas"     onclick="filtrarAtletas('avulsas')">Avulsas</button>
       <button class="btn btn-sm" id="at-mensalistas" onclick="filtrarAtletas('mensalistas')">Mensalistas</button>
       <button class="btn btn-sm" id="at-ausentes"    onclick="filtrarAtletas('ausentes')">Ausentes</button>
@@ -188,7 +277,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="page-camp" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <span class="sec" style="margin:0;">Campeonatos</span>
-      <button class="btn btn-sm" style="background:#378ADD;color:white;border-color:#378ADD;" onclick="abrirNovoCampeonato()">+ Novo</button>
+      <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovoCampeonato()">+ Novo</button>
     </div>
     <div id="camp-content"><div class="loading">Carregando...</div></div>
   </div>
@@ -221,20 +310,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:8px;">
-        <button class="btn" style="flex:1;font-size:12px;background:#185FA5;color:white;border-color:#185FA5;" onclick="abrirRelatorioRestricoes('detalhado')">📄 Relatório detalhado</button>
+        <button class="btn" style="flex:1;font-size:12px;background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirRelatorioRestricoes('detalhado')">📄 Relatório detalhado</button>
         <button class="btn" style="flex:1;font-size:12px;background:#1D9E75;color:white;border-color:#1D9E75;" onclick="abrirRelatorioRestricoes('tabela')">📊 Planilha PDF</button>
       </div>
     </div>
     <div id="rest-content"><div class="loading">Carregando...</div></div>
   </div>
 
-  <nav class="nav">
+  <nav class="nav" id="main-nav">
+    <div class="nav-brand">🏐 Vôlei <em>Master</em></div>
+    <div class="nav-section">Principal</div>
     <button class="active" onclick="showPage('dash')"><span class="ico">🏠</span>Início</button>
-    <button onclick="showPage('jogo')"><span class="ico">➕</span>Jogos</button>
+    <button onclick="showPage('jogo')"><span class="ico">🏐</span>Jogos</button>
     <button onclick="showPage('fech')"><span class="ico">💰</span>Cobranças</button>
+    <div class="nav-section">Gestão</div>
     <button onclick="showPage('atl')"><span class="ico">👥</span>Atletas</button>
     <button onclick="showPage('camp')"><span class="ico">🏆</span>Campeonatos</button>
     <button onclick="showPage('rest')"><span class="ico">🚫</span>Restrições</button>
+    <div class="nav-footer">
+      <div class="nav-user">Logado como<span id="nav-nome-sidebar"></span></div>
+      <button class="nav-sair" onclick="logout()">Sair</button>
+    </div>
   </nav>
 </div>
 
@@ -245,7 +341,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- Custom alert/confirm -->
 <div id="custom-dialog" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;padding:20px;">
   <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:white;border-radius:16px;padding:24px 20px;width:calc(100% - 40px);max-width:320px;box-shadow:0 8px 32px rgba(0,0,0,.2);">
-    <div style="font-size:13px;font-weight:700;color:#378ADD;margin-bottom:8px;">🏐 Vôlei Master</div>
+    <div style="font-size:13px;font-weight:700;color:#1a3f8f;margin-bottom:8px;">🏐 Vôlei Master</div>
     <div id="dialog-msg" style="font-size:15px;color:#1a1a2e;margin-bottom:20px;line-height:1.5;white-space:pre-line;"></div>
     <div id="dialog-btns" style="display:flex;gap:10px;justify-content:flex-end;"></div>
   </div>
@@ -256,7 +352,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 const TOKEN = () => localStorage.getItem('volei_token');
 const NOME  = () => localStorage.getItem('volei_nome');
 if (!TOKEN()) { window.location.href = 'index.html'; }
-document.getElementById('hdr-nome').textContent = NOME()||'';
+const _nome = NOME()||'';
+document.getElementById('hdr-nome').textContent = _nome;
+const _ns = document.getElementById('nav-nome-sidebar'); if(_ns) _ns.textContent = _nome;
 function logout(){ localStorage.removeItem("volei_token"); localStorage.removeItem("volei_nome"); localStorage.removeItem("volei_nivel"); window.location.href="index.html"; }
 var NIVEL = localStorage.getItem("volei_nivel") || "admin";
 function podeEditar(){ return NIVEL === "admin" || NIVEL === "padrao"; }
@@ -648,7 +746,7 @@ async function verJogo(id) {
     ${atletasParaExibir.map(a=>{
       const checked = presencasPresentes.has(String(a.id));
       const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-      const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
+      const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
       const eid = String(a.id).replace(/'/g,"\\'");
       const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
       return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;${a.status==='ausente'?'opacity:0.75;':''}">
@@ -750,7 +848,7 @@ async function carregarAtletasJogo() {
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta no sistema.</div>'
       : todas.map(a => {
           const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
+          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
           const tipoLabel = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
           const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
           return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
@@ -785,7 +883,7 @@ async function carregarAtletasJogo() {
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta neste campeonato.</div>'
       : selecionaveis.map(a=>{
           const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#185FA5' : '#555';
+          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
           const label = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
           const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
           return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
@@ -881,7 +979,7 @@ function renderPreview(preview, mes) {
     </div>`;
   });
   html += `<button class="btn btn-p btn-g" onclick="gerarMsgWhatsApp()">📲 Gerar mensagem WhatsApp</button>`;
-  html += `<button class="btn btn-p" style="margin-top:8px;background:#185FA5;width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:12px;border:none;cursor:pointer;" onclick="abrirRelatorio()">📄 Relatório PDF</button>`;
+  html += `<button class="btn btn-p" style="margin-top:8px;background:#1a3f8f;width:100%;padding:13px;font-size:15px;font-weight:700;border-radius:12px;border:none;cursor:pointer;" onclick="abrirRelatorio()">📄 Relatório PDF</button>`;
   if (podeGerenciarUsuarios()) {
     html += '<p class="sec">Usuários do sistema</p>';
     html += '<div class="card" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;"><div><div style="font-size:14px;font-weight:600;">Gerenciar acessos</div><div style="font-size:12px;color:#bbb;">Cadastrar e controlar usuários</div></div><button class="btn btn-sm" onclick="abrirUsuarios()">Acessar</button></div>';
@@ -1003,7 +1101,7 @@ async function copiarMsg() {
 function fechTab(t) {
   fechTabAtiva = t;
   const pEl=document.getElementById('tab-pend'), gEl=document.getElementById('tab-pago');
-  pEl.style.cssText=t==='pend'?'flex:1;background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;':'flex:1;';
+  pEl.style.cssText=t==='pend'?'flex:1;background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;':'flex:1;';
   gEl.style.cssText=t==='pago'?'flex:1;background:#EAF3DE;color:#3B6D11;border-color:#9FE1CB;':'flex:1;';
   const mes = document.getElementById('fech-mes').value;
   api('pagamentos.php?mes='+mes).then(pags => renderPagamentos(pags, previewAtual, mes));
@@ -1101,8 +1199,8 @@ async function carregarAtletas() {
 function filtrarAtletas(f) {
   filtroAtl = f;
   const cores = {
-    todas:['#E6F1FB','#185FA5','#B5D4F4'], avulsas:['#FAEEDA','#854F0B','#FAC775'],
-    mensalistas:['#EAF3DE','#3B6D11','#9FE1CB'], ausentes:['#FCEBEB','#A32D2D','#F7C1C1'],
+    todas:['#e8eef8','#1a3f8f','#c5d5ef'], avulsas:['#FAEEDA','#854F0B','#FAC775'],
+    mensalistas:['#D1FAE5','#065F46','#9FE1CB'], ausentes:['#FCEBEB','#A32D2D','#F7C1C1'],
     inativas:['#f0f0f2','#555','#ccc']
   };
   ['todas','avulsas','mensalistas','ausentes','inativas'].forEach(t => {
@@ -1670,10 +1768,10 @@ function copiarLinkRestricao() {
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;';
   overlay.innerHTML = `
     <div style="background:white;border-radius:16px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.18);">
-      <div style="font-weight:700;font-size:16px;color:#185FA5;margin-bottom:12px;">🔗 Link para atletas</div>
+      <div style="font-weight:700;font-size:16px;color:#1a3f8f;margin-bottom:12px;">🔗 Link para atletas</div>
       <div id="link-modal-url" style="background:#f4f4f6;border-radius:10px;padding:12px 14px;font-size:13px;color:#1a1a2e;word-break:break-all;margin-bottom:16px;">${url}</div>
       <div style="display:flex;gap:10px;">
-        <button id="link-modal-copy" style="flex:1;padding:11px;background:#378ADD;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">📋 Copiar link</button>
+        <button id="link-modal-copy" style="flex:1;padding:11px;background:#1a3f8f;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">📋 Copiar link</button>
         <button id="link-modal-close" style="padding:11px 18px;background:#f4f4f6;color:#555;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">Fechar</button>
       </div>
     </div>`;
@@ -1832,7 +1930,7 @@ async function abrirUsuarios() {
   var addBtn = document.createElement("button"); addBtn.className="btn btn-p"; addBtn.style.cssText="margin-bottom:14px;width:100%;"; addBtn.textContent="+ Novo usuario";
   addBtn.onclick = abrirNovoUsuario;
   var list = document.createElement("div");
-  var cores = {admin:"#185FA5",padrao:"#3B6D11",limitado:"#854F0B"};
+  var cores = {admin:"#1a3f8f",padrao:"#065F46",limitado:"#854F0B"};
   var labels = {admin:"Admin",padrao:"Padrao",limitado:"Limitado"};
   users.forEach(function(u) {
     var row = document.createElement("div");
