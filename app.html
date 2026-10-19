@@ -2171,13 +2171,20 @@ async function renderAtlGrid() {
     const e = !insc ? 'nao' : insc.status==='ausente' ? 'afastada' : insc.tipo;
     return estadoOrd[e] ?? 9;
   };
+  // melhor status da atleta em qualquer campeonato (menor = melhor)
+  const bestStatus = (a) => Math.min(...camps.map(c => getVal(a, c.id)));
+
   const sorted = [...ativas].sort((a, b) => {
+    // 1. melhor status global sempre prioriza
+    const ba = bestStatus(a), bb = bestStatus(b);
+    if (ba !== bb) return ba - bb;
+    // 2. colunas escolhidas pelo usuário
     for (const {col, dir} of gridSortKeys) {
       const va = getVal(a, col), vb = getVal(b, col);
       if (va < vb) return -dir;
       if (va > vb) return dir;
     }
-    // desempate: percorre os outros campeonatos na ordem das colunas
+    // 3. desempate pelos outros campeonatos na ordem das colunas
     for (const c of camps) {
       const va = getVal(a, c.id), vb = getVal(b, c.id);
       if (va < vb) return -1;
