@@ -314,6 +314,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div style="display:flex;gap:6px;">
         <button class="btn btn-sm" id="atl-view-lista" onclick="setAtlView('lista')">☰ Lista</button>
         <button class="btn btn-sm" id="atl-view-grid"  onclick="setAtlView('grid')" style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">⊞ Tabela</button>
+        <button class="btn btn-sm" onclick="verAtletasInativas()" style="color:#777;border-color:#ccc;">⏸ Inativas</button>
         <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovaAtleta()">+ Nova</button>
       </div>
     </div>
@@ -2301,6 +2302,60 @@ async function inativarAtleta(id, nome) {
   fecharModal();
   await carregarAtletas();
   await vAlert(`${nome} foi inativada.`);
+}
+
+async function verAtletasInativas() {
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = '<div class="loading">Carregando...</div>';
+  document.getElementById('modal-bg').style.display = 'flex';
+
+  const atletas = await api('atletas.php') || [];
+  const inativas = atletas.filter(a =>
+    a.inscricoes && a.inscricoes.length > 0 &&
+    a.inscricoes.every(i => i.status === 'inativa')
+  );
+
+  if (!inativas.length) {
+    mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+    <h2>⏸ Atletas Inativas</h2>
+    <div class="empty"><span>✅</span>Nenhuma atleta inativa.</div>`;
+    return;
+  }
+
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>⏸ Atletas Inativas</h2>
+  <p style="font-size:13px;color:#888;margin-bottom:14px;">${inativas.length} atleta(s) inativa(s). Clique em Reativar para devolvê-la ao grupo.</p>
+  <div id="inativas-lista">
+  ${inativas.map(a => {
+    const camps = (a.inscricoes||[]).map(i=>`<span style="font-size:11px;color:#aaa;">${i.camp_nome}</span>`).join(' · ');
+    return `<div id="inat-row-${a.id}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+      <div class="av" style="background:#eee;color:#aaa;width:36px;height:36px;font-size:12px;flex-shrink:0;">${ini(a.nome)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;">${a.nome}</div>
+        <div style="margin-top:2px;">${camps}</div>
+      </div>
+      <button class="btn" style="color:#3B6D11;border-color:#9FE1CB;padding:6px 12px;font-size:12px;white-space:nowrap;"
+        onclick="reativarAtleta('${a.id}','${a.nome}')">↩️ Reativar</button>
+    </div>`;
+  }).join('')}
+  </div>`;
+}
+
+async function reativarAtleta(id, nome) {
+  const atletas = todosAtletas.length ? todosAtletas : await api('atletas.php') || [];
+  const a = atletas.find(x=>x.id===id); if (!a) return;
+  for (const ins of (a.inscricoes||[])) {
+    await api('atletas.php','PUT',{atleta_id:id,campeonato_id:ins.campeonato_id,status:'ativa',status_desde:dataHoje()});
+  }
+  const row = document.getElementById('inat-row-'+id);
+  if (row) row.remove();
+  const restantes = document.querySelectorAll('#inativas-lista [id^="inat-row-"]');
+  if (restantes.length === 0) {
+    document.getElementById('inativas-lista').innerHTML =
+      '<div class="empty" style="padding:20px;"><span>✅</span>Todas reativadas!</div>';
+  }
+  await carregarAtletas();
+  if (atlViewMode === 'grid') renderAtlGrid();
 }
 
 // ── CUSTOM DIALOG ────────────────────────────────────
