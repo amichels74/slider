@@ -21,6 +21,9 @@ if (count($jogos) > 0) {
 
 $db->beginTransaction();
 try {
+    // historicos ligados ao campeonato
+    $db->prepare("DELETE FROM historico_status WHERE campeonato_id = ?")->execute([$id]);
+    $db->prepare("DELETE FROM historico_tipo   WHERE campeonato_id = ?")->execute([$id]);
     // participacoes ligadas aos jogos deste campeonato
     $db->prepare("DELETE p FROM participacoes p JOIN jogos j ON j.id = p.jogo_id WHERE j.campeonato_id = ?")->execute([$id]);
     // jogos restantes (segurança)
