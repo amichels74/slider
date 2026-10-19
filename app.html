@@ -19,22 +19,28 @@
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);-webkit-tap-highlight-color:transparent;}
 
 /* ── SHELL ── */
-.app{max-width:1440px;margin:0 auto;min-height:100vh;background:var(--bg);}
+.app{max-width:1440px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg);}
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
 
 /* ── HEADER (mobile top bar) ── */
-.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:var(--hdr-h);background:var(--blue);color:white;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(26,63,143,.25);}
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:var(--hdr-h);background:var(--blue);color:white;position:sticky;top:0;z-index:20;box-shadow:0 2px 8px rgba(26,63,143,.25);flex-shrink:0;}
 .hdr h1{font-size:17px;font-weight:800;color:white;letter-spacing:-.3px;}
 .hdr h1 em{color:var(--yellow);font-style:normal;}
 .hdr-right{display:flex;align-items:center;gap:8px;}
 #hdr-nome{font-size:11px;color:rgba(255,255,255,.65);font-weight:500;}
-.hdr .btn-sair{padding:5px 13px;font-size:12px;font-weight:700;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:20px;cursor:pointer;transition:background .15s;}
-.hdr .btn-sair:hover{background:rgba(255,255,255,.25);}
+.hdr .btn-sair{padding:5px 13px;font-size:12px;font-weight:700;background:rgba(255,255,255,.15);color:white;border:1px solid rgba(255,255,255,.3);border-radius:20px;cursor:pointer;}
+
+/* ── SIDEBAR NAV ── */
+.nav{display:none;}
+.nav-brand{display:none;}
+.nav-section{display:none;}
+.nav-footer{display:none;}
 
 /* ── BOTTOM NAV (mobile) ── */
-.nav{display:flex;border-top:3px solid var(--blue);position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:1440px;background:white;z-index:30;box-shadow:0 -2px 12px rgba(26,63,143,.12);}
-.nav button{flex:1;padding:7px 2px 9px;font-size:9px;background:none;border:none;color:#9ca3af;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600;transition:color .15s;}
-.nav button .ico{font-size:20px;line-height:1.1;}
-.nav button.active{color:var(--blue);}
+.nav-bottom{display:flex;border-top:3px solid var(--blue);position:fixed;bottom:0;left:0;right:0;background:white;z-index:30;box-shadow:0 -2px 12px rgba(26,63,143,.12);}
+.nav-bottom button{flex:1;padding:7px 2px 9px;font-size:9px;background:none;border:none;color:#9ca3af;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:600;}
+.nav-bottom button .ico{font-size:20px;line-height:1.1;}
+.nav-bottom button.active{color:var(--blue);}
 
 /* ── PAGES ── */
 .page{display:none;padding:16px 16px 90px;}
@@ -48,47 +54,55 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* ── DESKTOP SIDEBAR ── */
 @media(min-width:768px){
   .hdr{display:none;}
+  .nav-bottom{display:none;}
+
+  .app{flex-direction:row;align-items:stretch;}
+
+  /* Sidebar */
   .nav{
-    position:fixed;top:0;left:50%;transform:translateX(-50%);
-    width:var(--nav-w);max-width:var(--nav-w);
-    height:100vh;
-    flex-direction:column;align-items:stretch;justify-content:flex-start;
-    border-top:none;border-right:1px solid rgba(255,255,255,.08);
+    display:flex;flex-direction:column;align-items:stretch;
+    width:var(--nav-w);min-width:var(--nav-w);flex-shrink:0;
     background:var(--blue);
-    box-shadow:3px 0 20px rgba(26,63,143,.3);
-    overflow-y:auto;padding-top:0;
+    position:sticky;top:0;height:100vh;overflow-y:auto;
+    box-shadow:3px 0 20px rgba(26,63,143,.25);
   }
   .nav-brand{
-    display:flex;align-items:center;gap:10px;
+    display:flex;align-items:center;
     height:var(--hdr-h);padding:0 20px;
-    font-size:17px;font-weight:800;color:white;
-    border-bottom:1px solid rgba(255,255,255,.15);
-    flex-shrink:0;letter-spacing:-.3px;
+    font-size:17px;font-weight:800;color:white;letter-spacing:-.3px;
+    border-bottom:1px solid rgba(255,255,255,.15);flex-shrink:0;
   }
   .nav-brand em{color:var(--yellow);font-style:normal;}
-  .nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;padding:18px 20px 6px;}
+  .nav-section{
+    display:block;
+    font-size:10px;font-weight:700;color:rgba(255,255,255,.4);
+    text-transform:uppercase;letter-spacing:.08em;padding:18px 20px 6px;
+  }
   .nav button{
-    flex:none;flex-direction:row;justify-content:flex-start;
+    display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
     gap:12px;padding:12px 20px;
-    font-size:13px;font-weight:600;
-    color:rgba(255,255,255,.7);
-    border-radius:0;text-align:left;
+    font-size:13px;font-weight:600;color:rgba(255,255,255,.75);
+    background:none;border:none;cursor:pointer;text-align:left;
     transition:background .15s,color .15s;
   }
   .nav button .ico{font-size:17px;width:22px;text-align:center;flex-shrink:0;}
   .nav button:hover{background:rgba(255,255,255,.09);color:white;}
   .nav button.active{background:var(--yellow);color:var(--blue) !important;font-weight:700;}
-  .nav-footer{margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.12);}
+  .nav-footer{
+    display:block;
+    margin-top:auto;padding:16px 20px;border-top:1px solid rgba(255,255,255,.12);
+  }
   .nav-user{font-size:11px;color:rgba(255,255,255,.5);margin-bottom:8px;font-weight:500;}
   .nav-user span{display:block;font-size:13px;color:rgba(255,255,255,.85);font-weight:700;}
-  .nav-sair{width:100%;padding:9px;font-size:12px;font-weight:700;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;transition:background .15s;}
+  .nav-sair{width:100%;padding:9px;font-size:12px;font-weight:700;background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.2);border-radius:10px;cursor:pointer;}
   .nav-sair:hover{background:rgba(255,255,255,.2);}
 
-  /* Push all pages right of sidebar */
-  .page{margin-left:var(--nav-w);min-height:100vh;padding-top:24px;padding-bottom:32px;}
-  #page-jogo.active{display:flex !important;margin-left:var(--nav-w);min-height:100vh;}
-  #jogo-left-col{width:420px;min-width:320px;flex-shrink:0;border-right:1px solid var(--border);max-height:100vh;overflow-y:auto;padding-bottom:32px;}
-  #jogo-right-panel{display:flex !important;flex-direction:column;flex:1;max-height:100vh;overflow-y:auto;}
+  /* Main content area */
+  .main{flex:1;min-width:0;min-height:100vh;}
+  .page{padding-top:24px;padding-bottom:32px;}
+  #page-jogo.active{display:flex !important;min-height:100vh;}
+  #jogo-left-col{width:420px;min-width:320px;flex-shrink:0;border-right:1px solid var(--border);height:100vh;overflow-y:auto;padding-bottom:32px;}
+  #jogo-right-panel{display:flex !important;flex-direction:column;flex:1;height:100vh;overflow-y:auto;}
   .modal{max-width:700px;}
 }
 
@@ -167,6 +181,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </head>
 <body>
 <div class="app">
+  <nav class="nav" id="main-nav">
+    <div class="nav-brand">🏐 Vôlei <em>Master</em></div>
+    <div class="nav-section">Principal</div>
+    <button class="active" onclick="showPage('dash')"><span class="ico">🏠</span>Início</button>
+    <button onclick="showPage('jogo')"><span class="ico">🏐</span>Jogos</button>
+    <button onclick="showPage('fech')"><span class="ico">💰</span>Cobranças</button>
+    <div class="nav-section">Gestão</div>
+    <button onclick="showPage('atl')"><span class="ico">👥</span>Atletas</button>
+    <button onclick="showPage('camp')"><span class="ico">🏆</span>Campeonatos</button>
+    <button onclick="showPage('rest')"><span class="ico">🚫</span>Restrições</button>
+    <div class="nav-footer">
+      <div class="nav-user">Logado como<span id="nav-nome-sidebar"></span></div>
+      <button class="nav-sair" onclick="logout()">Sair</button>
+    </div>
+  </nav>
+
+  <div class="main">
   <div class="hdr">
     <h1>🏐 Vôlei <em>Cobranças</em></h1>
     <div class="hdr-right">
@@ -317,21 +348,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="rest-content"><div class="loading">Carregando...</div></div>
   </div>
 
-  <nav class="nav" id="main-nav">
-    <div class="nav-brand">🏐 Vôlei <em>Master</em></div>
-    <div class="nav-section">Principal</div>
+  <!-- mobile bottom nav -->
+  <nav class="nav-bottom">
     <button class="active" onclick="showPage('dash')"><span class="ico">🏠</span>Início</button>
     <button onclick="showPage('jogo')"><span class="ico">🏐</span>Jogos</button>
     <button onclick="showPage('fech')"><span class="ico">💰</span>Cobranças</button>
-    <div class="nav-section">Gestão</div>
     <button onclick="showPage('atl')"><span class="ico">👥</span>Atletas</button>
     <button onclick="showPage('camp')"><span class="ico">🏆</span>Campeonatos</button>
     <button onclick="showPage('rest')"><span class="ico">🚫</span>Restrições</button>
-    <div class="nav-footer">
-      <div class="nav-user">Logado como<span id="nav-nome-sidebar"></span></div>
-      <button class="nav-sair" onclick="logout()">Sair</button>
-    </div>
   </nav>
+  </div><!-- /main -->
 </div>
 
 <div id="modal-bg" style="display:none;" class="modal-bg" onclick="fecharModal(event)">
@@ -418,11 +444,16 @@ function fecharModal(e) {
 const PAGES = ['dash','jogo','fech','atl','camp','rest'];
 function showPage(p) {
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
-  document.querySelectorAll('.nav button').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nav button, .nav-bottom button').forEach(e=>e.classList.remove('active'));
   const el = document.getElementById('page-'+p);
   if (el) el.classList.add('active');
   const idx = PAGES.indexOf(p);
-  if (idx >= 0) document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if (idx >= 0) {
+    const sidebtns = document.querySelectorAll('.nav button');
+    const botbtns  = document.querySelectorAll('.nav-bottom button');
+    if (sidebtns[idx]) sidebtns[idx].classList.add('active');
+    if (botbtns[idx])  botbtns[idx].classList.add('active');
+  }
   if (p==='dash') renderDash();
   if (p==='jogo') { initSelectMes('j-filtro-mes', carregarListaJogos); carregarListaJogos(); }
   if (p==='fech') { initSelectMes('fech-mes', carregarFechamento); carregarFechamento(); }
