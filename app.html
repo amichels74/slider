@@ -173,9 +173,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .atl-grid td:first-child{font-weight:600;color:var(--text);}
 .grid-tipo{display:inline-flex;align-items:center;justify-content:center;min-width:84px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
 .grid-tipo.mensalista{background:var(--blue-l);color:var(--blue);}
-.grid-tipo.avulsa{background:#FEF3C7;color:#92400E;}
+.grid-tipo.avulsa{background:#D1FAE5;color:#065F46;}
 .grid-tipo.nao{background:#f3f4f6;color:#9ca3af;}
-.grid-tipo.afastada{background:#FFF3CD;color:#856404;}
+.grid-tipo.afastada{background:#FEE2E2;color:#991B1B;}
 .grid-tipo:hover{filter:brightness(.92);}
 .grid-tipo-sel{display:inline-block;min-width:90px;padding:4px 6px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;text-align:center;appearance:none;-webkit-appearance:none;}
 
@@ -2160,7 +2160,7 @@ async function renderAtlGrid() {
     return ia - ib;
   });
 
-  const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#FEF3C7;color:#92400E;', afastada:'background:#FFF3CD;color:#856404;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+  const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#D1FAE5;color:#065F46;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
 
   const thead = `<tr>
     <th style="text-align:left;min-width:160px;padding-left:16px;cursor:default;">Atleta</th>
@@ -2235,7 +2235,7 @@ function gridDrop(e, targetCampId) {
 async function mudarGridEstado(atletaId, campId, estadoAtual, novoEstado, selEl) {
   if (novoEstado === estadoAtual) return;
 
-  const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#FEF3C7;color:#92400E;', afastada:'background:#FFF3CD;color:#856404;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+  const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#D1FAE5;color:#065F46;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
 
   const revert = () => { selEl.value = estadoAtual; selEl.style.cssText = cores[estadoAtual]||cores.nao; };
 
