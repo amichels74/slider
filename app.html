@@ -334,6 +334,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <span class="sec" style="margin:0;">Campeonatos</span>
       <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" style="color:#555;border-color:#ccc;" onclick="abrirRelatorioMensalistas()">📋 Mensalistas</button>
         <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovoCampeonato('mensal')">+ Mensal</button>
         <button class="btn btn-sm" style="background:#f5b800;color:#1a3f8f;border-color:#e0a800;font-weight:700;" onclick="abrirNovoCampeonato('semestral')">+ Semestral</button>
       </div>
@@ -2690,6 +2691,11 @@ async function carregarRestricoes() {
   }
 
   el.innerHTML = html;
+}
+
+function abrirRelatorioMensalistas() {
+  const token = localStorage.getItem('volei_token') || '';
+  window.open('relatorio_mensalistas.php?token=' + encodeURIComponent(token), '_blank');
 }
 
 function abrirRelatorioRestricoes(formato) {
