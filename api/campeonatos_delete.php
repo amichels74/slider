@@ -21,11 +21,15 @@ if (count($jogos) > 0) {
 
 $db->beginTransaction();
 try {
-    // tabelas opcionais — só deleta se existirem
-    $tabelas = ['pagamentos','fechamentos','historico_status','historico_tipo','cobrancas'];
+    // tabelas opcionais — só deleta se existirem E tiverem coluna campeonato_id
+    $dbName = $db->query("SELECT DATABASE()")->fetchColumn();
+    $tabelas = ['pagamentos','fechamentos','historico_status','historico_tipo','cobrancas','ajustes'];
     foreach ($tabelas as $t) {
-        $chk = $db->query("SHOW TABLES LIKE '$t'")->fetch();
-        if ($chk) $db->prepare("DELETE FROM $t WHERE campeonato_id = ?")->execute([$id]);
+        $chk = $db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND COLUMN_NAME='campeonato_id'");
+        $chk->execute([$dbName, $t]);
+        if ($chk->fetchColumn() > 0) {
+            $db->prepare("DELETE FROM $t WHERE campeonato_id = ?")->execute([$id]);
+        }
     }
     // participações → jogos
     $db->prepare("DELETE p FROM participacoes p JOIN jogos j ON j.id = p.jogo_id WHERE j.campeonato_id = ?")->execute([$id]);
