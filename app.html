@@ -1837,9 +1837,11 @@ async function verDetalhesSemestral(campId) {
           <button onclick="editarSaldoCaixa('${campId}',${saldoAnter})" title="Editar saldo anterior"
             style="background:rgba(245,184,0,.3);border:none;border-radius:6px;color:#f5b800;font-size:11px;font-weight:700;cursor:pointer;padding:2px 7px;">✏️</button>
         </div>
-        <div style="font-size:18px;font-weight:800;margin-top:2px;color:#f5b800;">${R(totalCaixa)}</div>
-        <div style="font-size:10px;opacity:.7;margin-top:4px;">
-          ${saldoAnter>0?`<span style="color:#fde68a;">↩ Anterior: ${R(saldoAnter)}</span> + `:''}<span>Avulsas: ${R(recAvulsas)}</span>
+        <div id="saldo-caixa-box-${campId}">
+          <div style="font-size:18px;font-weight:800;margin-top:2px;color:#f5b800;">${R(totalCaixa)}</div>
+          <div style="font-size:10px;opacity:.7;margin-top:4px;">
+            ${saldoAnter>0?`<span style="color:#fde68a;">↩ Anterior: ${R(saldoAnter)}</span> + `:''}<span>Avulsas: ${R(recAvulsas)}</span>
+          </div>
         </div>
       </div>
       <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;">
@@ -1902,31 +1904,25 @@ async function toggleParcelaSem(parcelaId, pago, campId) {
   verDetalhesSemestral(campId);
 }
 
-async function editarSaldoCaixa(campId, saldoAtual) {
-  const val = await new Promise(resolve => {
-    const bg = document.getElementById('dialog-bg');
-    const msg = document.getElementById('dialog-msg');
-    const extra = document.getElementById('dialog-extra');
-    const btns = document.getElementById('dialog-btns');
-    msg.textContent = '💰 Saldo em caixa do semestre anterior';
-    extra.innerHTML = `<input id="dlg-saldo" type="number" step="0.01" min="0" value="${saldoAtual.toFixed(2)}"
-      style="width:100%;padding:10px 12px;font-size:16px;border:1.5px solid #ddd;border-radius:10px;text-align:right;">`;
-    btns.innerHTML = '';
-    const btnCancel = document.createElement('button');
-    btnCancel.className = 'btn'; btnCancel.textContent = 'Cancelar';
-    btnCancel.onclick = () => { bg.style.display='none'; extra.innerHTML=''; resolve(null); };
-    const btnOk = document.createElement('button');
-    btnOk.className = 'btn btn-p'; btnOk.textContent = 'Salvar';
-    btnOk.onclick = () => {
-      const v = parseFloat(document.getElementById('dlg-saldo').value);
-      bg.style.display='none'; extra.innerHTML='';
-      resolve(isNaN(v) ? null : v);
-    };
-    btns.appendChild(btnCancel); btns.appendChild(btnOk);
-    bg.style.display = 'flex';
-    setTimeout(()=>document.getElementById('dlg-saldo')?.focus(),50);
-  });
-  if (val === null) return;
+function editarSaldoCaixa(campId, saldoAtual) {
+  const el = document.getElementById('saldo-caixa-box-' + campId);
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+      <input id="saldo-inp-${campId}" type="number" step="0.01" min="0" value="${saldoAtual.toFixed(2)}"
+        style="flex:1;padding:5px 8px;font-size:14px;border:1.5px solid #f5b800;border-radius:8px;background:rgba(255,255,255,.15);color:white;text-align:right;width:80px;">
+      <button onclick="salvarSaldoCaixa('${campId}')"
+        style="background:#f5b800;color:#1a3f8f;border:none;border-radius:8px;padding:5px 10px;font-weight:700;cursor:pointer;font-size:12px;">✓</button>
+      <button onclick="verDetalhesSemestral('${campId}')"
+        style="background:rgba(255,255,255,.2);color:white;border:none;border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;">✕</button>
+    </div>`;
+  setTimeout(()=>document.getElementById('saldo-inp-'+campId)?.select(), 30);
+}
+
+async function salvarSaldoCaixa(campId) {
+  const inp = document.getElementById('saldo-inp-' + campId);
+  const val = parseFloat(inp?.value);
+  if (isNaN(val)) return;
   await api('campeonatos_semestral.php','PUT',{camp_id:campId, saldo_caixa:val});
   verDetalhesSemestral(campId);
 }
