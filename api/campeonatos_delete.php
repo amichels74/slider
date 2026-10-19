@@ -1,7 +1,6 @@
 <?php
 require_once 'config.php';
 checkAuth();
-if (!checkNivel(['admin'])) jsonResponse(['erro' => 'Sem permissão'], 403);
 
 $db = getDB();
 $method = $_SERVER['REQUEST_METHOD'];

@@ -312,8 +312,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <span class="sec" style="margin:0;">Atletas</span>
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-sm" id="atl-view-lista" onclick="setAtlView('lista')" style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">☰ Lista</button>
-        <button class="btn btn-sm" id="atl-view-grid"  onclick="setAtlView('grid')">⊞ Tabela</button>
+        <button class="btn btn-sm" id="atl-view-lista" onclick="setAtlView('lista')">☰ Lista</button>
+        <button class="btn btn-sm" id="atl-view-grid"  onclick="setAtlView('grid')" style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">⊞ Tabela</button>
         <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovaAtleta()">+ Nova</button>
       </div>
     </div>
@@ -485,7 +485,7 @@ function showPage(p) {
   if (p==='dash') renderDash();
   if (p==='jogo') { initSelectMes('j-filtro-mes', carregarListaJogos); carregarListaJogos(); }
   if (p==='fech') { initSelectMes('fech-mes', carregarFechamento); carregarFechamento(); }
-  if (p==='atl')  carregarAtletas();
+  if (p==='atl')  { carregarAtletas(); setAtlView('grid'); }
   if (p==='camp') carregarCampeonatos();
   if (p==='rest') carregarRestricoes();
 }
@@ -2073,7 +2073,7 @@ async function salvarEditarCampeonato(id) {
 }
 
 // ── GRADE DE ATLETAS POR CAMPEONATO ──────────────────
-var atlViewMode = 'lista';
+var atlViewMode = 'grid';
 
 function setAtlView(mode) {
   atlViewMode = mode;
@@ -2100,22 +2100,40 @@ function setAtlView(mode) {
 async function renderAtlGrid() {
   const el = document.getElementById('atl-grid');
   el.innerHTML = '<div class="loading">Carregando...</div>';
-  const camps = await api('campeonatos.php') || [];
+  const campsRaw = await api('campeonatos.php') || [];
   const atletas = todosAtletas || await api('atletas.php') || [];
   const ativas = atletas.filter(a => a.inscricoes && a.inscricoes.some(i => i.status !== 'inativa'));
 
-  if (!camps.length) { el.innerHTML='<div class="empty"><span>🏆</span>Nenhum campeonato.</div>'; return; }
+  if (!campsRaw.length) { el.innerHTML='<div class="empty"><span>🏆</span>Nenhum campeonato.</div>'; return; }
+
+  // Ordenação salva pelo usuário
+  let order = [];
+  try { order = JSON.parse(localStorage.getItem('gridCampOrder')||'[]'); } catch(e){}
+  const camps = [...campsRaw].sort((a,b) => {
+    const ia = order.indexOf(a.id), ib = order.indexOf(b.id);
+    if (ia===-1 && ib===-1) return 0;
+    if (ia===-1) return 1;
+    if (ib===-1) return -1;
+    return ia - ib;
+  });
+
+  const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#FEF3C7;color:#92400E;', afastada:'background:#FFF3CD;color:#856404;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
 
   const thead = `<tr>
-    <th style="text-align:left;min-width:160px;padding-left:16px;">Atleta</th>
-    ${camps.map(c=>`<th>${c.nome}</th>`).join('')}
+    <th style="text-align:left;min-width:160px;padding-left:16px;cursor:default;">Atleta</th>
+    ${camps.map(c=>`<th draggable="true" data-camp-id="${c.id}"
+      style="cursor:grab;user-select:none;"
+      ondragstart="gridDragStart(event,'${c.id}')"
+      ondragover="gridDragOver(event)"
+      ondrop="gridDrop(event,'${c.id}')"
+      ondragend="gridDragEnd(event)"
+      title="Arraste para reordenar">${c.nome}</th>`).join('')}
   </tr>`;
 
   const tbody = ativas.map(a => {
     const cells = camps.map(c => {
       const insc = (a.inscricoes||[]).find(i=>i.campeonato_id===c.id && i.status !== 'inativa');
       const estado = !insc ? 'nao' : insc.status === 'ausente' ? 'afastada' : insc.tipo;
-      const cores = {mensalista:'background:var(--blue-l);color:var(--blue);', avulsa:'background:#FEF3C7;color:#92400E;', afastada:'background:#FFF3CD;color:#856404;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
       const cor = cores[estado] || cores.nao;
       return `<td style="text-align:center;">
         <select class="grid-tipo-sel" style="${cor}" onchange="mudarGridEstado('${a.id}','${c.id}','${estado}',this.value,this)">
@@ -2139,6 +2157,36 @@ async function renderAtlGrid() {
   }).join('');
 
   el.innerHTML = `<div class="atl-grid-wrap"><table class="atl-grid"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+// ── DRAG-AND-DROP COLUNAS ─────────────────────────────
+let _dragCampId = null;
+function gridDragStart(e, campId) {
+  _dragCampId = campId;
+  e.currentTarget.style.opacity = '0.4';
+}
+function gridDragEnd(e) {
+  e.currentTarget.style.opacity = '';
+  document.querySelectorAll('.atl-grid th').forEach(th=>th.style.outline='');
+}
+function gridDragOver(e) {
+  e.preventDefault();
+  e.currentTarget.style.outline = '2px solid var(--yellow)';
+}
+function gridDrop(e, targetCampId) {
+  e.preventDefault();
+  e.currentTarget.style.outline = '';
+  if (!_dragCampId || _dragCampId === targetCampId) return;
+  // Lê ordem atual da DOM
+  const ths = [...document.querySelectorAll('.atl-grid th[data-camp-id]')];
+  const order = ths.map(th=>th.dataset.campId);
+  const fromIdx = order.indexOf(_dragCampId);
+  const toIdx   = order.indexOf(targetCampId);
+  if (fromIdx === -1 || toIdx === -1) return;
+  order.splice(fromIdx, 1);
+  order.splice(toIdx, 0, _dragCampId);
+  try { localStorage.setItem('gridCampOrder', JSON.stringify(order)); } catch(e){}
+  renderAtlGrid();
 }
 
 async function mudarGridEstado(atletaId, campId, estadoAtual, novoEstado, selEl) {
