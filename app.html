@@ -2117,7 +2117,7 @@ async function salvarEditarCampeonato(id) {
 
 // ── GRADE DE ATLETAS POR CAMPEONATO ──────────────────
 var atlViewMode = 'grid';
-var gridSort = {col: 'nome', dir: 1}; // col: 'nome' | campId; dir: 1=asc -1=desc
+var gridSortKeys = [{col:'nome', dir:1}]; // array de {col, dir} — multi-coluna
 
 function setAtlView(mode) {
   atlViewMode = mode;
@@ -2164,35 +2164,42 @@ async function renderAtlGrid() {
   const cores = {mensalista:'background:#1a3f8f;color:white;', avulsa:'background:#D1FAE5;color:#065F46;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
   const estadoOrd = {mensalista:0, avulsa:1, afastada:2, organizadora:3, nao:4};
 
-  // Ordenação por coluna
+  // Ordenação multi-coluna
+  const getVal = (a, col) => {
+    if (col === 'nome') return a.nome.toLowerCase();
+    const insc = (a.inscricoes||[]).find(i=>i.campeonato_id===col && i.status!=='inativa');
+    const e = !insc ? 'nao' : insc.status==='ausente' ? 'afastada' : insc.tipo;
+    return estadoOrd[e] ?? 9;
+  };
   const sorted = [...ativas].sort((a, b) => {
-    let va, vb;
-    if (gridSort.col === 'nome') {
-      va = a.nome.toLowerCase(); vb = b.nome.toLowerCase();
-    } else {
-      const ia = (a.inscricoes||[]).find(i=>i.campeonato_id===gridSort.col && i.status!=='inativa');
-      const ib = (b.inscricoes||[]).find(i=>i.campeonato_id===gridSort.col && i.status!=='inativa');
-      const ea = !ia ? 'nao' : ia.status==='ausente' ? 'afastada' : ia.tipo;
-      const eb = !ib ? 'nao' : ib.status==='ausente' ? 'afastada' : ib.tipo;
-      va = estadoOrd[ea] ?? 9; vb = estadoOrd[eb] ?? 9;
+    for (const {col, dir} of gridSortKeys) {
+      const va = getVal(a, col), vb = getVal(b, col);
+      if (va < vb) return -dir;
+      if (va > vb) return dir;
     }
-    return va < vb ? -gridSort.dir : va > vb ? gridSort.dir : 0;
+    return 0;
   });
 
-  const sortIco = (col) => gridSort.col===col ? (gridSort.dir===1?' ↑':' ↓') : '';
+  const sortIco = (col) => {
+    const idx = gridSortKeys.findIndex(k=>k.col===col);
+    if (idx === -1) return '';
+    const num = gridSortKeys.length > 1 ? (idx+1) : '';
+    return ` <span style="font-size:10px;opacity:.8;">${num}${gridSortKeys[idx].dir===1?'↑':'↓'}</span>`;
+  };
   const thStyle = 'cursor:pointer;user-select:none;';
+  const thHint = 'Clique para ordenar · Shift+clique para adicionar · Arraste para reordenar';
 
   const thead = `<tr>
     <th style="text-align:left;min-width:160px;padding-left:16px;${thStyle}"
-      onclick="gridSortBy('nome')">Atleta${sortIco('nome')}</th>
+      onclick="gridSortBy('nome',event.shiftKey)" title="Clique para ordenar · Shift+clique para ordenar em 2º">Atleta${sortIco('nome')}</th>
     ${camps.map(c=>`<th draggable="true" data-camp-id="${c.id}"
       style="${thStyle}"
-      onclick="gridSortBy('${c.id}')"
+      onclick="gridSortBy('${c.id}',event.shiftKey)"
       ondragstart="gridDragStart(event,'${c.id}')"
       ondragover="gridDragOver(event)"
       ondrop="gridDrop(event,'${c.id}')"
       ondragend="gridDragEnd(event)"
-      title="Clique para ordenar · Arraste para reordenar">${c.nome}${sortIco(c.id)}</th>`).join('')}
+      title="${thHint}">${c.nome}${sortIco(c.id)}</th>`).join('')}
   </tr>`;
 
   const tbody = sorted.map(a => {
@@ -2225,9 +2232,21 @@ async function renderAtlGrid() {
 }
 
 // ── ORDENAÇÃO E DRAG-AND-DROP COLUNAS ────────────────
-function gridSortBy(col) {
-  if (gridSort.col === col) gridSort.dir *= -1;
-  else { gridSort.col = col; gridSort.dir = 1; }
+function gridSortBy(col, shift) {
+  const idx = gridSortKeys.findIndex(k=>k.col===col);
+  if (shift) {
+    if (idx !== -1) {
+      // já existe: toggle dir; se já desc remove
+      if (gridSortKeys[idx].dir === 1) gridSortKeys[idx].dir = -1;
+      else gridSortKeys.splice(idx, 1);
+    } else {
+      gridSortKeys.push({col, dir:1});
+    }
+  } else {
+    if (idx === 0 && gridSortKeys.length === 1) gridSortKeys[0].dir *= -1;
+    else gridSortKeys = [{col, dir: idx===0 ? gridSortKeys[0].dir*-1 : 1}];
+  }
+  if (!gridSortKeys.length) gridSortKeys = [{col:'nome', dir:1}];
   renderAtlGrid();
 }
 
