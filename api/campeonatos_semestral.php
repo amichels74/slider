@@ -4,7 +4,7 @@ checkAuth();
 $db = getDB();
 $method = $_SERVER['REQUEST_METHOD'];
 
-// GET ?id=X → detalhes do campeonato semestral (parcelas, jogos, restrições)
+// GET ?id=X → detalhes do campeonato semestral (atletas + parcelas)
 if ($method === 'GET') {
     $id = $_GET['id'] ?? '';
     if (!$id) jsonResponse(['erro' => 'ID obrigatório'], 400);
@@ -14,38 +14,61 @@ if ($method === 'GET') {
     $camp = $stmt->fetch();
     if (!$camp) jsonResponse(['erro' => 'Campeonato não encontrado'], 404);
 
-    // Atletas inscritas com tipo e parcelas pagas
     $stmt = $db->prepare("
-        SELECT i.atleta_id, a.nome, i.tipo,
-               (SELECT COUNT(*) FROM parcelas_semestral ps WHERE ps.inscricao_id = i.id AND ps.pago = 1) AS parcelas_pagas,
-               (SELECT COUNT(*) FROM parcelas_semestral ps WHERE ps.inscricao_id = i.id) AS total_parcelas
+        SELECT i.id AS inscricao_id, i.atleta_id, a.nome, i.tipo,
+               ps.id AS parcela_id, ps.tipo AS ptipo, ps.numero, ps.valor, ps.pago, ps.data_pagamento
         FROM inscricoes i
         JOIN atletas a ON a.id = i.atleta_id
+        LEFT JOIN parcelas_semestral ps ON ps.inscricao_id = i.id
         WHERE i.campeonato_id = ? AND i.status = 'ativa'
-        ORDER BY a.nome
+        ORDER BY a.nome, ps.tipo DESC, ps.numero
     ");
     $stmt->execute([$id]);
-    $atletas = $stmt->fetchAll();
-    $camp['atletas'] = $atletas;
+    $rows = $stmt->fetchAll();
 
+    // Agrupa parcelas por atleta
+    $atletasMap = [];
+    foreach ($rows as $r) {
+        $aid = $r['atleta_id'];
+        if (!isset($atletasMap[$aid])) {
+            $atletasMap[$aid] = [
+                'atleta_id'   => $aid,
+                'inscricao_id'=> $r['inscricao_id'],
+                'nome'        => $r['nome'],
+                'tipo'        => $r['tipo'],
+                'parcelas'    => [],
+            ];
+        }
+        if ($r['parcela_id']) {
+            $atletasMap[$aid]['parcelas'][] = [
+                'id'             => $r['parcela_id'],
+                'tipo'           => $r['ptipo'],
+                'numero'         => $r['numero'],
+                'valor'          => $r['valor'],
+                'pago'           => $r['pago'],
+                'data_pagamento' => $r['data_pagamento'],
+            ];
+        }
+    }
+    $camp['atletas'] = array_values($atletasMap);
     jsonResponse($camp);
 }
 
 // POST → criar campeonato semestral
 if ($method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
-    $id    = preg_replace('/\s+/', '', $input['id'] ?? '');
-    $nome  = trim($input['nome'] ?? '');
-    $local = trim($input['local_jogo'] ?? '');
-    $custo_total  = floatval($input['custo_total'] ?? 0);
-    $custo_tecnico= floatval($input['custo_tecnico'] ?? 0);
-    $n_jogos      = intval($input['n_jogos'] ?? 0);
-    $n_parcelas   = intval($input['n_parcelas'] ?? 3);
-    $inscricoes   = $input['inscricoes'] ?? [];
+    $id              = preg_replace('/\s+/', '', $input['id'] ?? '');
+    $nome            = trim($input['nome'] ?? '');
+    $local           = trim($input['local_jogo'] ?? '');
+    $custo_total     = floatval($input['custo_total'] ?? 0);
+    $custo_tecnico   = floatval($input['custo_tecnico'] ?? 0);
+    $n_jogos         = intval($input['n_jogos'] ?? 0);
+    $n_parcelas      = intval($input['n_parcelas'] ?? 3);
+    $valor_matricula = floatval($input['valor_matricula'] ?? 0);
+    $inscricoes      = $input['inscricoes'] ?? [];
 
     if (!$id || !$nome) jsonResponse(['erro' => 'ID e nome obrigatórios'], 400);
 
-    // Verifica duplicata
     $stmt = $db->prepare("SELECT id FROM campeonatos WHERE id = ?");
     $stmt->execute([$id]);
     if ($stmt->fetch()) jsonResponse(['erro' => 'ID já existe'], 409);
@@ -53,16 +76,17 @@ if ($method === 'POST') {
     $db->beginTransaction();
     try {
         $db->prepare("
-            INSERT INTO campeonatos (id, nome, local_jogo, ativo, tipo, custo_total, custo_tecnico, n_jogos, n_parcelas)
-            VALUES (?, ?, ?, 1, 'semestral', ?, ?, ?, ?)
-        ")->execute([$id, $nome, $local, $custo_total, $custo_tecnico, $n_jogos, $n_parcelas]);
+            INSERT INTO campeonatos (id, nome, local_jogo, ativo, tipo, custo_total, custo_tecnico, n_jogos, n_parcelas, valor_matricula)
+            VALUES (?, ?, ?, 1, 'semestral', ?, ?, ?, ?, ?)
+        ")->execute([$id, $nome, $local, $custo_total, $custo_tecnico, $n_jogos, $n_parcelas, $valor_matricula ?: null]);
 
-        // Valor por atleta mensalista (custo total dividido)
         $nMensalistas = count(array_filter($inscricoes, fn($i) => $i['tipo'] === 'mensalista'));
-        $valorParcela = $nMensalistas > 0 ? round(($custo_total + $custo_tecnico) / $nMensalistas / $n_parcelas, 2) : 0;
+        $valorParcela = $nMensalistas > 0
+            ? round(($custo_total + $custo_tecnico) / $nMensalistas / $n_parcelas, 2)
+            : 0;
 
         foreach ($inscricoes as $insc) {
-            if ($insc['tipo'] === 'nao') continue;
+            if (($insc['tipo'] ?? 'nao') === 'nao') continue;
             $db->prepare("
                 INSERT INTO inscricoes (atleta_id, campeonato_id, tipo, status, data_entrada)
                 VALUES (?, ?, ?, 'ativa', CURDATE())
@@ -70,10 +94,18 @@ if ($method === 'POST') {
             $inscId = $db->lastInsertId();
 
             if ($insc['tipo'] === 'mensalista') {
+                // Matrícula (número 0, tipo 'matricula')
+                if ($valor_matricula > 0) {
+                    $db->prepare("
+                        INSERT INTO parcelas_semestral (inscricao_id, tipo, numero, valor, pago)
+                        VALUES (?, 'matricula', 0, ?, 0)
+                    ")->execute([$inscId, $valor_matricula]);
+                }
+                // Parcelas do semestre
                 for ($p = 1; $p <= $n_parcelas; $p++) {
                     $db->prepare("
-                        INSERT INTO parcelas_semestral (inscricao_id, numero, valor, pago)
-                        VALUES (?, ?, ?, 0)
+                        INSERT INTO parcelas_semestral (inscricao_id, tipo, numero, valor, pago)
+                        VALUES (?, 'parcela', ?, ?, 0)
                     ")->execute([$inscId, $p, $valorParcela]);
                 }
             }
@@ -90,7 +122,7 @@ if ($method === 'POST') {
 
 // PUT → marcar parcela como paga/pendente
 if ($method === 'PUT') {
-    $input = json_decode(file_get_contents('php://input'), true);
+    $input     = json_decode(file_get_contents('php://input'), true);
     $parcelaId = intval($input['parcela_id'] ?? 0);
     $pago      = intval($input['pago'] ?? 0);
     if (!$parcelaId) jsonResponse(['erro' => 'parcela_id obrigatório'], 400);

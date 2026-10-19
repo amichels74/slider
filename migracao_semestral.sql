@@ -7,13 +7,16 @@ ALTER TABLE campeonatos
   ADD COLUMN custo_total DECIMAL(10,2) DEFAULT NULL AFTER tipo,
   ADD COLUMN custo_tecnico DECIMAL(10,2) DEFAULT NULL AFTER custo_total,
   ADD COLUMN n_jogos INT DEFAULT NULL AFTER custo_tecnico,
-  ADD COLUMN n_parcelas INT DEFAULT 3 AFTER n_jogos;
+  ADD COLUMN n_parcelas INT DEFAULT 3 AFTER n_jogos,
+  ADD COLUMN valor_matricula DECIMAL(10,2) DEFAULT NULL AFTER n_parcelas;
 
 -- 2. Tabela de parcelas para campeonato semestral
+-- tipo: 'matricula' (cobrada antes de iniciar) ou 'parcela' (parcelamento do semestre)
 CREATE TABLE IF NOT EXISTS parcelas_semestral (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   inscricao_id  INT NOT NULL,
-  numero        INT NOT NULL,           -- 1, 2, 3
+  tipo          VARCHAR(20) NOT NULL DEFAULT 'parcela', -- 'matricula' | 'parcela'
+  numero        INT NOT NULL,           -- matricula=0, parcelas=1,2,3
   valor         DECIMAL(10,2) NOT NULL,
   pago          TINYINT(1) DEFAULT 0,
   data_pagamento DATE DEFAULT NULL,

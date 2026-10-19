@@ -1717,7 +1717,7 @@ async function abrirNovoCampeonato(tipo) {
     </div>
     <div style="display:flex;gap:10px;">
       <div class="inp" style="flex:1;"><label>Nº de jogos</label><input type="number" id="nc-njogos" placeholder="Ex: 14" min="1"></div>
-      <div class="inp" style="flex:1;"><label>Parcelas</label>
+      <div class="inp" style="flex:1;"><label>Parcelas do semestre</label>
         <select id="nc-parcelas">
           <option value="1">1x (sem parcelar)</option>
           <option value="2">2x</option>
@@ -1725,7 +1725,15 @@ async function abrirNovoCampeonato(tipo) {
         </select>
       </div>
     </div>
-    <div class="info" style="font-size:12px;">O valor por parcela é calculado automaticamente dividindo o custo total pelo número de mensalistas inscritas.</div>
+    <div style="background:white;border:1.5px solid #f5b800;border-radius:10px;padding:12px;margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:700;color:#92400E;text-transform:uppercase;margin-bottom:8px;">🎫 Matrícula</div>
+      <div class="inp" style="margin-bottom:0;">
+        <label>Valor da matrícula (R$)</label>
+        <input type="number" id="nc-matricula" placeholder="Ex: 150,00 · deixe 0 se não cobrar" step="0.01" min="0" value="0">
+      </div>
+      <div style="font-size:11px;color:#aaa;margin-top:6px;line-height:1.5;">Paga antes de iniciar o campeonato. Gerada separada das parcelas do semestre.</div>
+    </div>
+    <div class="info" style="font-size:12px;">O valor por parcela é calculado automaticamente: (custo total + técnico) ÷ nº mensalistas ÷ nº parcelas.</div>
   </div>` : '';
 
   const listaAtletas = `
@@ -1764,11 +1772,12 @@ async function salvarNovoCampeonato(tipo) {
 
   let res;
   if (tipo === 'semestral') {
-    const custo_total   = parseFloat(document.getElementById('nc-custo-total').value||0);
-    const custo_tecnico = parseFloat(document.getElementById('nc-custo-tec').value||0);
-    const n_jogos       = parseInt(document.getElementById('nc-njogos').value||0);
-    const n_parcelas    = parseInt(document.getElementById('nc-parcelas').value||3);
-    res = await api('campeonatos_semestral.php','POST',{id,nome,local_jogo:local,custo_total,custo_tecnico,n_jogos,n_parcelas,inscricoes});
+    const custo_total    = parseFloat(document.getElementById('nc-custo-total').value||0);
+    const custo_tecnico  = parseFloat(document.getElementById('nc-custo-tec').value||0);
+    const n_jogos        = parseInt(document.getElementById('nc-njogos').value||0);
+    const n_parcelas     = parseInt(document.getElementById('nc-parcelas').value||3);
+    const valor_matricula= parseFloat(document.getElementById('nc-matricula').value||0);
+    res = await api('campeonatos_semestral.php','POST',{id,nome,local_jogo:local,custo_total,custo_tecnico,n_jogos,n_parcelas,valor_matricula,inscricoes});
   } else {
     res = await api('campeonatos.php','POST',{id,nome,local_jogo:local,inscricoes});
   }
