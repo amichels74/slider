@@ -19,7 +19,21 @@ if (count($jogos) > 0) {
     jsonResponse(['bloqueado' => true, 'jogos' => $jogos], 409);
 }
 
-// Remove inscrições e depois o campeonato
-$db->prepare("DELETE FROM inscricoes WHERE campeonato_id = ?")->execute([$id]);
-$db->prepare("DELETE FROM campeonatos WHERE id = ?")->execute([$id]);
-jsonResponse(['ok' => true]);
+$db->beginTransaction();
+try {
+    // participacoes ligadas aos jogos deste campeonato
+    $db->prepare("DELETE p FROM participacoes p JOIN jogos j ON j.id = p.jogo_id WHERE j.campeonato_id = ?")->execute([$id]);
+    // jogos restantes (segurança)
+    $db->prepare("DELETE FROM jogos WHERE campeonato_id = ?")->execute([$id]);
+    // parcelas_semestral via inscricoes (CASCADE faz automaticamente, mas garante)
+    $db->prepare("DELETE ps FROM parcelas_semestral ps JOIN inscricoes i ON i.id = ps.inscricao_id WHERE i.campeonato_id = ?")->execute([$id]);
+    // inscricoes
+    $db->prepare("DELETE FROM inscricoes WHERE campeonato_id = ?")->execute([$id]);
+    // campeonato
+    $db->prepare("DELETE FROM campeonatos WHERE id = ?")->execute([$id]);
+    $db->commit();
+    jsonResponse(['ok' => true]);
+} catch (Exception $e) {
+    $db->rollBack();
+    jsonResponse(['erro' => $e->getMessage()], 500);
+}

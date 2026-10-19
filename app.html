@@ -439,7 +439,7 @@ function initSelectMes(id, onchange) {
   const sel = document.getElementById(id);
   if (!sel || sel.options.length) return;
   const hoje = new Date();
-  for(let i=0; i<6; i++){
+  for(let i=0; i<18; i++){
     const d = new Date(hoje.getFullYear(), hoje.getMonth()-i, 1);
     const val = d.toISOString().slice(0,7);
     sel.appendChild(new Option(fmtMes(val), val));
