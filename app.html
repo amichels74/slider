@@ -2076,7 +2076,12 @@ function atualizarSelectCamps(camps) {
   sel.innerHTML = camps.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
 }
 
-function abrirEditarCampeonato(c) {
+async function abrirEditarCampeonato(c) {
+  // Se semestral, busca campos completos (campeonatos.php pode não retorná-los)
+  if (c.tipo === 'semestral' && !c.custo_total) {
+    const full = await api('campeonatos_semestral.php?id=' + c.id);
+    if (full) Object.assign(c, full);
+  }
   const mb = document.getElementById('modal-body');
 
   const camposSem = `
