@@ -21,16 +21,17 @@ if (count($jogos) > 0) {
 
 $db->beginTransaction();
 try {
-    // historicos ligados ao campeonato
+    // cobranças / pagamentos ligados ao campeonato
+    $db->prepare("DELETE FROM pagamentos  WHERE campeonato_id = ?")->execute([$id]);
+    $db->prepare("DELETE FROM fechamentos WHERE campeonato_id = ?")->execute([$id]);
+    // históricos
     $db->prepare("DELETE FROM historico_status WHERE campeonato_id = ?")->execute([$id]);
     $db->prepare("DELETE FROM historico_tipo   WHERE campeonato_id = ?")->execute([$id]);
-    // participacoes ligadas aos jogos deste campeonato
+    // participações → jogos
     $db->prepare("DELETE p FROM participacoes p JOIN jogos j ON j.id = p.jogo_id WHERE j.campeonato_id = ?")->execute([$id]);
-    // jogos restantes (segurança)
     $db->prepare("DELETE FROM jogos WHERE campeonato_id = ?")->execute([$id]);
-    // parcelas_semestral via inscricoes (CASCADE faz automaticamente, mas garante)
+    // parcelas semestral → inscrições
     $db->prepare("DELETE ps FROM parcelas_semestral ps JOIN inscricoes i ON i.id = ps.inscricao_id WHERE i.campeonato_id = ?")->execute([$id]);
-    // inscricoes
     $db->prepare("DELETE FROM inscricoes WHERE campeonato_id = ?")->execute([$id]);
     // campeonato
     $db->prepare("DELETE FROM campeonatos WHERE id = ?")->execute([$id]);
