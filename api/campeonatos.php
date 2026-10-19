@@ -17,7 +17,9 @@ if ($method === 'GET') {
                c.custo_total, c.custo_tecnico, c.n_jogos, c.n_parcelas,
                c.valor_matricula, c.valor_avulsa,
                " . ($hasSaldo ? "COALESCE(c.saldo_caixa,0) AS saldo_caixa," : "0 AS saldo_caixa,") . "
-               COUNT(i.id) AS total_atletas
+               COUNT(i.id) AS total_atletas,
+               SUM(i.tipo='mensalista') AS total_mensalistas,
+               SUM(i.tipo='avulsa')     AS total_avulsas
         FROM campeonatos c
         LEFT JOIN inscricoes i ON i.campeonato_id = c.id AND i.status = 'ativa'
         WHERE c.ativo = 1

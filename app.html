@@ -1737,7 +1737,7 @@ async function carregarCampeonatos() {
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
         <div style="flex:1;">
           <div style="font-size:15px;font-weight:700;">${c.nome}</div>
-          <div style="font-size:12px;color:#aaa;">${c.local_jogo||''} · ${c.total_atletas||0} atletas</div>
+          <div style="font-size:12px;color:#aaa;">${c.local_jogo||''} · <span style="color:#1a3f8f;font-weight:600;">${c.total_mensalistas||0} mens.</span> · <span style="color:#065F46;font-weight:600;">${c.total_avulsas||0} avulsas</span></div>
           ${infoExtra}
         </div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
