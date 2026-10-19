@@ -11,12 +11,12 @@ $input = json_decode(file_get_contents('php://input'), true);
 $id    = $input['id'] ?? '';
 if (!$id) jsonResponse(['erro' => 'ID obrigatório'], 400);
 
-// Verifica se tem jogos registrados
-$stmt = $db->prepare("SELECT COUNT(*) FROM jogos WHERE campeonato_id = ?");
+// Verifica se tem jogos registrados — retorna a lista para o frontend
+$stmt = $db->prepare("SELECT id, data_jogo, mes_referencia, custo_jogo FROM jogos WHERE campeonato_id = ? ORDER BY data_jogo DESC");
 $stmt->execute([$id]);
-$nJogos = $stmt->fetchColumn();
-if ($nJogos > 0) {
-    jsonResponse(['erro' => "Este campeonato tem $nJogos jogo(s) registrado(s). Exclua os jogos antes de excluir o campeonato."], 409);
+$jogos = $stmt->fetchAll();
+if (count($jogos) > 0) {
+    jsonResponse(['bloqueado' => true, 'jogos' => $jogos], 409);
 }
 
 // Remove inscrições e depois o campeonato

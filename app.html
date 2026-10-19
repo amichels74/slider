@@ -1751,9 +1751,51 @@ async function carregarCampeonatos() {
 
 async function excluirCampeonato(id, nome) {
   if (!podeExcluir()) { await vAlert('Sem permissão.'); return; }
-  if (!await vConfirmDelete(`Excluir campeonato "${nome}"?\n\nIsso remove todas as inscrições. Jogos registrados impedem a exclusão.`)) return;
+  if (!await vConfirmDelete(`Excluir campeonato "${nome}"?\n\nIsso remove todas as inscrições.`)) return;
   const res = await api('campeonatos_delete.php','DELETE',{id});
-  if (res && res.ok) { await vAlert('Campeonato excluído.'); carregarCampeonatos(); }
+  if (res && res.ok) { await vAlert('Campeonato excluído.'); carregarCampeonatos(); return; }
+  if (res && res.bloqueado) {
+    // Mostra modal com lista de jogos para excluir
+    const mb = document.getElementById('modal-body');
+    mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+    <h2>🗑️ Jogos do campeonato</h2>
+    <p style="font-size:13px;color:#666;margin-bottom:14px;">Exclua os jogos abaixo antes de remover o campeonato <strong>${nome}</strong>.</p>
+    <div id="jogos-bloquear-lista">
+      ${res.jogos.map(j=>`
+      <div id="jbl-${j.id}" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0f0;">
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;">${fmtD(j.data_jogo)}</div>
+          <div style="font-size:12px;color:#aaa;">${fmtMes(j.mes_referencia)}</div>
+        </div>
+        <button class="btn" style="color:#A32D2D;border-color:#A32D2D;padding:6px 14px;font-size:12px;"
+          onclick="excluirJogoBloquear('${j.id}','${id}','${nome}')">🗑️ Excluir</button>
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-p" id="btn-reexcluir-camp" style="display:none;margin-top:12px;" onclick="tentarExcluirCampNovamente('${id}','${nome}')">Excluir campeonato agora</button>`;
+    document.getElementById('modal-bg').style.display = 'flex';
+    return;
+  }
+  await vAlert(res?.erro||'Erro ao excluir.');
+}
+
+async function excluirJogoBloquear(jogoId, campId, campNome) {
+  const res = await api('jogos.php?id='+jogoId, 'DELETE');
+  if (res && res.ok) {
+    const el = document.getElementById('jbl-'+jogoId);
+    if (el) el.remove();
+    const restantes = document.querySelectorAll('#jogos-bloquear-lista [id^="jbl-"]');
+    if (restantes.length === 0) {
+      document.getElementById('jogos-bloquear-lista').innerHTML =
+        '<p style="color:#3B6D11;font-size:13px;text-align:center;padding:12px;">✅ Todos os jogos foram excluídos.</p>';
+      const btn = document.getElementById('btn-reexcluir-camp');
+      if (btn) btn.style.display = '';
+    }
+  } else await vAlert(res?.erro||'Erro ao excluir jogo.');
+}
+
+async function tentarExcluirCampNovamente(id, nome) {
+  const res = await api('campeonatos_delete.php','DELETE',{id});
+  if (res && res.ok) { fecharModal(); await vAlert('Campeonato excluído.'); carregarCampeonatos(); }
   else await vAlert(res?.erro||'Erro ao excluir.');
 }
 
