@@ -1736,6 +1736,7 @@ async function carregarCampeonatos() {
           ${tipoBadge}
           <span class="badge ${c.ativo=='1'?'bg':'bgr'}">${c.ativo=='1'?'Ativo':'Inativo'}</span>
           ${c.tipo==='semestral'?`<button onclick="verDetalhesSemestral('${c.id}')" style="font-size:12px;padding:4px 10px;background:#1a3f8f;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Ver</button>`:''}
+          <button onclick='abrirEditarCampeonato(${JSON.stringify(c)})' style="font-size:12px;padding:4px 10px;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:8px;cursor:pointer;font-weight:600;">✏️ Editar</button>
           ${podeExcluir()?`<button onclick="excluirCampeonato('${c.id}','${c.nome.replace(/'/g,'\\\'')}')" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;line-height:1;padding:0 2px;" title="Excluir">🗑️</button>`:''}
         </div>
       </div>
@@ -1941,6 +1942,85 @@ function atualizarSelectCamps(camps) {
   const sel = document.getElementById('j-camp');
   if (!sel || !camps) return;
   sel.innerHTML = camps.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+function abrirEditarCampeonato(c) {
+  const mb = document.getElementById('modal-body');
+
+  const camposSem = `
+  <div id="ec-sem-fields" style="${c.tipo==='semestral'?'':'display:none;'}">
+    <div style="background:#fffbe6;border:1.5px solid #f5b800;border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="font-size:11px;font-weight:700;color:#92400E;text-transform:uppercase;margin-bottom:10px;">📅 Configuração semestral</div>
+      <div style="display:flex;gap:10px;">
+        <div class="inp" style="flex:1;"><label>Custo total (R$)</label><input type="number" id="ec-custo-total" value="${c.custo_total||''}" step="0.01"></div>
+        <div class="inp" style="flex:1;"><label>Custo técnico (R$)</label><input type="number" id="ec-custo-tec" value="${c.custo_tecnico||''}" step="0.01"></div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="inp" style="flex:1;"><label>Nº de jogos</label><input type="number" id="ec-njogos" value="${c.n_jogos||''}" min="1"></div>
+        <div class="inp" style="flex:1;"><label>Parcelas</label>
+          <select id="ec-parcelas">
+            <option value="1" ${c.n_parcelas==1?'selected':''}>1x</option>
+            <option value="2" ${c.n_parcelas==2?'selected':''}>2x</option>
+            <option value="3" ${!c.n_parcelas||c.n_parcelas==3?'selected':''}>3x</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <div class="inp" style="flex:1;"><label>Valor avulsa (R$)</label><input type="number" id="ec-val-avulsa" value="${c.valor_avulsa||55}" step="0.01"></div>
+        <div class="inp" style="flex:1;"><label>Matrícula (R$)</label><input type="number" id="ec-matricula" value="${c.valor_matricula||0}" step="0.01" min="0"></div>
+      </div>
+    </div>
+  </div>`;
+
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>✏️ Editar campeonato</h2>
+  <div class="inp"><label>Nome</label><input type="text" id="ec-nome" value="${c.nome}"></div>
+  <div class="inp"><label>Local</label><input type="text" id="ec-local" value="${c.local_jogo||''}"></div>
+  <div class="inp"><label>Tipo</label>
+    <select id="ec-tipo" onchange="toggleEcTipo()">
+      <option value="mensal"    ${(!c.tipo||c.tipo==='mensal')   ?'selected':''}>Mensal (mensalidade/avulso)</option>
+      <option value="semestral" ${c.tipo==='semestral'?'selected':''}>Semestral (parcelas fixas)</option>
+    </select>
+  </div>
+  ${camposSem}
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+    <div class="tog ${c.ativo==1?'on':''}" id="ec-ativo" onclick="this.classList.toggle('on')"></div>
+    <span style="font-size:14px;font-weight:500;">Campeonato ativo</span>
+  </div>
+  <button class="btn btn-p" onclick="salvarEditarCampeonato('${c.id}')">Salvar alterações</button>`;
+
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+
+function toggleEcTipo() {
+  const tipo = document.getElementById('ec-tipo').value;
+  const box  = document.getElementById('ec-sem-fields');
+  if (box) box.style.display = tipo === 'semestral' ? '' : 'none';
+}
+
+async function salvarEditarCampeonato(id) {
+  const tipo  = document.getElementById('ec-tipo').value;
+  const ativo = document.getElementById('ec-ativo').classList.contains('on') ? 1 : 0;
+  const payload = {
+    id,
+    nome:       document.getElementById('ec-nome').value.trim(),
+    local_jogo: document.getElementById('ec-local').value.trim(),
+    tipo, ativo,
+  };
+  if (tipo === 'semestral') {
+    payload.custo_total     = parseFloat(document.getElementById('ec-custo-total').value||0);
+    payload.custo_tecnico   = parseFloat(document.getElementById('ec-custo-tec').value||0);
+    payload.n_jogos         = parseInt(document.getElementById('ec-njogos').value||0);
+    payload.n_parcelas      = parseInt(document.getElementById('ec-parcelas').value||3);
+    payload.valor_avulsa    = parseFloat(document.getElementById('ec-val-avulsa').value||55);
+    payload.valor_matricula = parseFloat(document.getElementById('ec-matricula').value||0);
+  }
+  const res = await api('campeonatos_edit.php','PUT', payload);
+  if (res && res.ok) {
+    fecharModal();
+    atualizarSelectCamps(res.camps);
+    carregarCampeonatos();
+  } else await vAlert(res?.erro || 'Erro ao salvar.');
 }
 
 // ── GRADE DE ATLETAS POR CAMPEONATO ──────────────────
