@@ -2177,7 +2177,12 @@ async function renderAtlGrid() {
       if (va < vb) return -dir;
       if (va > vb) return dir;
     }
-    // desempate: sempre alfabético por nome
+    // desempate: percorre os outros campeonatos na ordem das colunas
+    for (const c of camps) {
+      const va = getVal(a, c.id), vb = getVal(b, c.id);
+      if (va < vb) return -1;
+      if (va > vb) return 1;
+    }
     return a.nome.toLowerCase() < b.nome.toLowerCase() ? -1 : 1;
   });
 
