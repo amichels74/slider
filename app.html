@@ -2117,6 +2117,7 @@ async function salvarEditarCampeonato(id) {
 
 // ── GRADE DE ATLETAS POR CAMPEONATO ──────────────────
 var atlViewMode = 'grid';
+var gridSort = {col: 'nome', dir: 1}; // col: 'nome' | campId; dir: 1=asc -1=desc
 
 function setAtlView(mode) {
   atlViewMode = mode;
@@ -2161,19 +2162,40 @@ async function renderAtlGrid() {
   });
 
   const cores = {mensalista:'background:#1a3f8f;color:white;', avulsa:'background:#D1FAE5;color:#065F46;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+  const estadoOrd = {mensalista:0, avulsa:1, afastada:2, organizadora:3, nao:4};
+
+  // Ordenação por coluna
+  const sorted = [...ativas].sort((a, b) => {
+    let va, vb;
+    if (gridSort.col === 'nome') {
+      va = a.nome.toLowerCase(); vb = b.nome.toLowerCase();
+    } else {
+      const ia = (a.inscricoes||[]).find(i=>i.campeonato_id===gridSort.col && i.status!=='inativa');
+      const ib = (b.inscricoes||[]).find(i=>i.campeonato_id===gridSort.col && i.status!=='inativa');
+      const ea = !ia ? 'nao' : ia.status==='ausente' ? 'afastada' : ia.tipo;
+      const eb = !ib ? 'nao' : ib.status==='ausente' ? 'afastada' : ib.tipo;
+      va = estadoOrd[ea] ?? 9; vb = estadoOrd[eb] ?? 9;
+    }
+    return va < vb ? -gridSort.dir : va > vb ? gridSort.dir : 0;
+  });
+
+  const sortIco = (col) => gridSort.col===col ? (gridSort.dir===1?' ↑':' ↓') : '';
+  const thStyle = 'cursor:pointer;user-select:none;';
 
   const thead = `<tr>
-    <th style="text-align:left;min-width:160px;padding-left:16px;cursor:default;">Atleta</th>
+    <th style="text-align:left;min-width:160px;padding-left:16px;${thStyle}"
+      onclick="gridSortBy('nome')">Atleta${sortIco('nome')}</th>
     ${camps.map(c=>`<th draggable="true" data-camp-id="${c.id}"
-      style="cursor:grab;user-select:none;"
+      style="${thStyle}"
+      onclick="gridSortBy('${c.id}')"
       ondragstart="gridDragStart(event,'${c.id}')"
       ondragover="gridDragOver(event)"
       ondrop="gridDrop(event,'${c.id}')"
       ondragend="gridDragEnd(event)"
-      title="Arraste para reordenar">${c.nome}</th>`).join('')}
+      title="Clique para ordenar · Arraste para reordenar">${c.nome}${sortIco(c.id)}</th>`).join('')}
   </tr>`;
 
-  const tbody = ativas.map(a => {
+  const tbody = sorted.map(a => {
     const cells = camps.map(c => {
       const insc = (a.inscricoes||[]).find(i=>i.campeonato_id===c.id && i.status !== 'inativa');
       const estado = !insc ? 'nao' : insc.status === 'ausente' ? 'afastada' : insc.tipo;
@@ -2202,7 +2224,13 @@ async function renderAtlGrid() {
   el.innerHTML = `<div class="atl-grid-wrap"><table class="atl-grid"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
 }
 
-// ── DRAG-AND-DROP COLUNAS ─────────────────────────────
+// ── ORDENAÇÃO E DRAG-AND-DROP COLUNAS ────────────────
+function gridSortBy(col) {
+  if (gridSort.col === col) gridSort.dir *= -1;
+  else { gridSort.col = col; gridSort.dir = 1; }
+  renderAtlGrid();
+}
+
 let _dragCampId = null;
 function gridDragStart(e, campId) {
   _dragCampId = campId;
