@@ -471,7 +471,7 @@ function fecharModal(e) {
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────
 const PAGES = ['dash','jogo','fech','atl','camp','rest'];
-function showPage(p) {
+async function showPage(p) {
   document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
   document.querySelectorAll('.nav button, .nav-bottom button').forEach(e=>e.classList.remove('active'));
   const el = document.getElementById('page-'+p);
@@ -486,7 +486,7 @@ function showPage(p) {
   if (p==='dash') renderDash();
   if (p==='jogo') { initSelectMes('j-filtro-mes', carregarListaJogos); carregarListaJogos(); }
   if (p==='fech') { initSelectMes('fech-mes', carregarFechamento); carregarFechamento(); }
-  if (p==='atl')  { carregarAtletas(); setAtlView('grid'); }
+  if (p==='atl')  { await carregarAtletas(); setAtlView('grid'); }
   if (p==='camp') carregarCampeonatos();
   if (p==='rest') carregarRestricoes();
 }
