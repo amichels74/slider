@@ -315,6 +315,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <button class="btn btn-sm" id="atl-view-lista" onclick="setAtlView('lista')">☰ Lista</button>
         <button class="btn btn-sm" id="atl-view-grid"  onclick="setAtlView('grid')" style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">⊞ Tabela</button>
         <button class="btn btn-sm" onclick="verAtletasInativas()" style="color:#777;border-color:#ccc;">⏸ Inativas</button>
+        <button class="btn btn-sm" onclick="abrirRelatorioAtletas()" style="color:#555;border-color:#ccc;">📋 Relatório</button>
         <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovaAtleta()">+ Nova</button>
       </div>
     </div>
@@ -2735,6 +2736,54 @@ async function carregarRestricoes() {
   }
 
   el.innerHTML = html;
+}
+
+async function abrirRelatorioAtletas() {
+  const token = localStorage.getItem('volei_token') || '';
+  const camps = await api('campeonatos.php') || [];
+
+  const mb = document.getElementById('modal-body');
+  const campOpts = `<option value="">Todos os campeonatos</option>`
+    + camps.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+
+  const statusOpts = [
+    {val:'mensalista',  label:'Mensalista',   bg:'#1a3f8f', color:'white'},
+    {val:'avulsa',      label:'Avulsa',        bg:'#D1FAE5', color:'#065F46'},
+    {val:'afastada',    label:'Afastada',      bg:'#FEE2E2', color:'#991B1B'},
+    {val:'organizadora',label:'Organizadora',  bg:'#E8F5E9', color:'#2E7D32'},
+  ].map(s=>`
+    <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #e5e7eb;cursor:pointer;user-select:none;">
+      <input type="checkbox" value="${s.val}" checked style="width:16px;height:16px;accent-color:#1a3f8f;">
+      <span style="background:${s.bg};color:${s.color};border-radius:50px;padding:3px 12px;font-size:12px;font-weight:700;">${s.label}</span>
+    </label>`).join('');
+
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>📋 Relatório de Atletas</h2>
+  <div class="inp" style="margin-bottom:14px;">
+    <label>Campeonato</label>
+    <select id="rel-atl-camp" style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;">
+      ${campOpts}
+    </select>
+  </div>
+  <div style="margin-bottom:6px;font-size:11px;font-weight:700;color:#555;text-transform:uppercase;">Status</div>
+  <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;" id="rel-atl-status-group">
+    ${statusOpts}
+  </div>
+  <button class="btn btn-p" onclick="gerarRelatorioAtletas('${token}')">📄 Gerar relatório</button>`;
+
+  document.getElementById('modal-bg').style.display = 'flex';
+}
+
+function gerarRelatorioAtletas(token) {
+  const camp = document.getElementById('rel-atl-camp').value;
+  const checks = document.querySelectorAll('#rel-atl-status-group input[type=checkbox]:checked');
+  const statuses = Array.from(checks).map(c=>c.value);
+  if (!statuses.length) { vAlert('Selecione ao menos um status.'); return; }
+  let url = 'relatorio_atletas.php?token=' + encodeURIComponent(token)
+    + '&status=' + encodeURIComponent(statuses.join(','));
+  if (camp) url += '&camp=' + encodeURIComponent(camp);
+  fecharModal();
+  window.open(url, '_blank');
 }
 
 function abrirRelatorioMensalistas() {
