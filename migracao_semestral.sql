@@ -8,7 +8,8 @@ ALTER TABLE campeonatos
   ADD COLUMN custo_tecnico DECIMAL(10,2) DEFAULT NULL AFTER custo_total,
   ADD COLUMN n_jogos INT DEFAULT NULL AFTER custo_tecnico,
   ADD COLUMN n_parcelas INT DEFAULT 3 AFTER n_jogos,
-  ADD COLUMN valor_matricula DECIMAL(10,2) DEFAULT NULL AFTER n_parcelas;
+  ADD COLUMN valor_matricula DECIMAL(10,2) DEFAULT NULL AFTER n_parcelas,
+  ADD COLUMN valor_avulsa DECIMAL(10,2) DEFAULT 55.00 AFTER valor_matricula;
 
 -- 2. Tabela de parcelas para campeonato semestral
 -- tipo: 'matricula' (cobrada antes de iniciar) ou 'parcela' (parcelamento do semestre)

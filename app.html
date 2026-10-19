@@ -884,6 +884,34 @@ async function carregarAtletasJogo() {
   selAvulsas.clear();
   document.getElementById('j-lista-avulsas').innerHTML = '<div class="loading">Carregando...</div>';
 
+  // Se campeonato semestral: pré-preenche custo por jogo
+  if (!mesFerias && camp) {
+    const todosC = await api('campeonatos.php') || [];
+    const campObj = todosC.find(c => String(c.id) === String(camp));
+    if (campObj && campObj.tipo === 'semestral') {
+      window._campSemestral = campObj;
+      const nJogos = parseInt(campObj.n_jogos || 1);
+      document.getElementById('j-custo').value    = nJogos ? (parseFloat(campObj.custo_total||0)/nJogos).toFixed(2) : 0;
+      document.getElementById('j-tecnico').value  = nJogos ? (parseFloat(campObj.custo_tecnico||0)/nJogos).toFixed(2) : 0;
+      document.getElementById('j-avulsa').value   = parseFloat(campObj.valor_avulsa||55);
+      // Mostra aviso semestral
+      let aviso = document.getElementById('j-aviso-semestral');
+      if (!aviso) {
+        aviso = document.createElement('div');
+        aviso.id = 'j-aviso-semestral';
+        aviso.className = 'info';
+        aviso.style.marginBottom = '10px';
+        document.getElementById('j-lista-avulsas').before(aviso);
+      }
+      aviso.innerHTML = '📅 <strong>Semestral:</strong> mensalistas são apenas registradas (sem cobrança extra). Avulsas convocadas pagam o valor avulsa e o valor vai para o caixa.';
+      aviso.style.display = '';
+    } else {
+      window._campSemestral = null;
+      const aviso = document.getElementById('j-aviso-semestral');
+      if (aviso) aviso.style.display = 'none';
+    }
+  }
+
   if (mesFerias) {
     // Férias: busca TODAS as atletas do sistema (sem filtro de campeonato)
     const todasData = await api('atletas.php') || [];
@@ -938,9 +966,15 @@ async function carregarAtletasJogo() {
     document.getElementById('j-lista-avulsas').innerHTML = selecionaveis.length === 0
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta neste campeonato.</div>'
       : selecionaveis.map(a=>{
+          const isSem = !!window._campSemestral;
           const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
           const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
-          const label = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
+          const valAvulsa = isSem ? parseFloat(window._campSemestral.valor_avulsa||55) : null;
+          const label = a.tipo==='avulsa'
+            ? (isSem ? `avulsa convocada · paga ${R(valAvulsa)}` : 'avulsa')
+            : a.tipo==='mensalista'
+              ? (isSem ? 'mensalista · sem cobrança extra' : 'mensalista')
+              : a.tipo;
           const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
           return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
             <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
@@ -962,20 +996,40 @@ async function salvarJogo() {
   const camp = document.getElementById('j-camp').value;
   const data = document.getElementById('j-data').value;
   if (!data) { await vAlert('Informe a data'); return; }
+
+  const isSem = !!window._campSemestral;
+  const selecionados = [...selAvulsas];
+
+  let avulsas_ids, presencas_ids;
+  if (mesFerias) {
+    avulsas_ids   = [];
+    presencas_ids = selecionados;
+  } else if (isSem) {
+    // Semestral: avulsas convocadas → cobrar; mensalistas presentes → só registrar como presença
+    avulsas_ids   = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='avulsa'; });
+    presencas_ids = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo!=='avulsa'; });
+  } else {
+    avulsas_ids   = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return !a || a.tipo==='avulsa'; });
+    presencas_ids = [];
+  }
+
   const payload = {
     campeonato_id: camp,
     data_jogo: data,
-    custo_jogo: parseFloat(document.getElementById('j-custo').value)||0,
+    custo_jogo:    parseFloat(document.getElementById('j-custo').value)||0,
     custo_tecnico: parseFloat(document.getElementById('j-tecnico').value)||0,
-    valor_avulsa: parseFloat(document.getElementById('j-avulsa').value)||55,
-    avulsas_ids: mesFerias ? [] : [...selAvulsas].filter(id => { const a = atletasJogo.find(x=>x.id===id); return !a || a.tipo==='avulsa'; }),
+    valor_avulsa:  parseFloat(document.getElementById('j-avulsa').value)||55,
+    avulsas_ids,
     observacoes: document.getElementById('j-obs').value,
     mes_ferias: mesFerias ? 1 : 0,
-    presencas_ids: mesFerias ? [...selAvulsas] : []
+    presencas_ids
   };
   const res = await api('jogos.php', 'POST', payload);
-  if (res && res.ok) { selAvulsas.clear(); mesFerias = false; await vAlert('Jogo salvo!'); voltarListaJogos(); }
-  else await vAlert('Erro ao salvar jogo.');
+  if (res && res.ok) {
+    window._campSemestral = null;
+    selAvulsas.clear(); mesFerias = false;
+    await vAlert('Jogo salvo!'); voltarListaJogos();
+  } else await vAlert('Erro ao salvar jogo.');
 }
 
 // ── COBRANÇAS ─────────────────────────────────────────
@@ -1681,6 +1735,7 @@ async function carregarCampeonatos() {
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           ${tipoBadge}
           <span class="badge ${c.ativo=='1'?'bg':'bgr'}">${c.ativo=='1'?'Ativo':'Inativo'}</span>
+          ${c.tipo==='semestral'?`<button onclick="verDetalhesSemestral('${c.id}')" style="font-size:12px;padding:4px 10px;background:#1a3f8f;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Ver</button>`:''}
           ${podeExcluir()?`<button onclick="excluirCampeonato('${c.id}','${c.nome.replace(/'/g,'\\\'')}')" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;line-height:1;padding:0 2px;" title="Excluir">🗑️</button>`:''}
         </div>
       </div>
@@ -1695,6 +1750,96 @@ async function excluirCampeonato(id, nome) {
   const res = await api('campeonatos_delete.php','DELETE',{id});
   if (res && res.ok) { await vAlert('Campeonato excluído.'); carregarCampeonatos(); }
   else await vAlert(res?.erro||'Erro ao excluir.');
+}
+
+async function verDetalhesSemestral(campId) {
+  const mb = document.getElementById('modal-body');
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button><div class="loading">Carregando...</div>`;
+  document.getElementById('modal-bg').style.display = 'flex';
+
+  const d = await api('campeonatos_semestral.php?id=' + campId);
+  if (!d) { mb.innerHTML += '<div class="empty">Erro ao carregar.</div>'; return; }
+
+  // Receita avulsas dos jogos já registrados
+  const recAvulsas = parseFloat(d.receita_avulsas || 0);
+  const custoTotal = parseFloat(d.custo_total || 0) + parseFloat(d.custo_tecnico || 0);
+  const saldoCaixa = recAvulsas; // avulsas vão pro caixa
+  const custoLiq   = Math.max(0, custoTotal - recAvulsas);
+  const nMens      = (d.atletas||[]).filter(a=>a.tipo==='mensalista').length;
+
+  // Resumo financeiro
+  const resumo = `
+  <div style="background:#1a3f8f;border-radius:14px;padding:16px 18px;margin-bottom:16px;color:white;">
+    <div style="font-size:16px;font-weight:800;margin-bottom:12px;">🏅 ${d.nome}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700;">Custo total</div>
+        <div style="font-size:18px;font-weight:800;margin-top:2px;">${R(custoTotal)}</div>
+        <div style="font-size:10px;opacity:.6;margin-top:2px;">${d.n_jogos||0} jogos · ${d.n_parcelas||3}x parcelas</div>
+      </div>
+      <div style="background:rgba(245,184,0,.2);border-radius:10px;padding:10px 12px;border:1px solid rgba(245,184,0,.4);">
+        <div style="font-size:10px;color:#f5b800;text-transform:uppercase;font-weight:700;">💰 Caixa avulsas</div>
+        <div style="font-size:18px;font-weight:800;margin-top:2px;color:#f5b800;">${R(saldoCaixa)}</div>
+        <div style="font-size:10px;opacity:.6;margin-top:2px;">receita de avulsas convocadas</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700;">Custo líquido</div>
+        <div style="font-size:18px;font-weight:800;margin-top:2px;">${R(custoLiq)}</div>
+        <div style="font-size:10px;opacity:.6;margin-top:2px;">após receita avulsas</div>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;">
+        <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700;">Por mensalista</div>
+        <div style="font-size:18px;font-weight:800;margin-top:2px;">${nMens>0?R(custoLiq/nMens):R(0)}</div>
+        <div style="font-size:10px;opacity:.6;margin-top:2px;">${nMens} mensalistas</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Parcelas por atleta
+  const atletasHtml = (d.atletas||[]).map(a => {
+    if (a.tipo !== 'mensalista') return ''; // avulsas não têm parcelas fixas
+    const matricula = (a.parcelas||[]).find(p=>p.tipo==='matricula');
+    const parcelas  = (a.parcelas||[]).filter(p=>p.tipo==='parcela').sort((x,y)=>x.numero-y.numero);
+    const pago = (a.parcelas||[]).filter(p=>p.pago==1).reduce((s,p)=>s+parseFloat(p.valor),0);
+    const total= (a.parcelas||[]).reduce((s,p)=>s+parseFloat(p.valor),0);
+
+    const mkBtn = p => {
+      const ok = p.pago==1;
+      return `<button onclick="toggleParcelaSem(${p.id},${ok?0:1},'${campId}')"
+        style="display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;
+               background:${ok?'#D1FAE5':'#f3f4f6'};color:${ok?'#065F46':'#6b7280'};">
+        ${ok?'✓':'○'} ${p.tipo==='matricula'?'Matrícula':p.numero+'ª parcela'} ${R(p.valor)}${ok&&p.data_pagamento?' · '+fmtD(p.data_pagamento):''}
+      </button>`;
+    };
+
+    return `<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="av" style="${avS('mensalista')};width:30px;height:30px;font-size:10px;">${ini(a.nome)}</div>
+          <div style="font-size:14px;font-weight:700;">${a.nome}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#aaa;">Pago</div>
+          <div style="font-size:15px;font-weight:700;color:${pago>=total?'#065F46':'#1a3f8f'};">${R(pago)} <span style="font-size:11px;font-weight:400;color:#aaa;">/ ${R(total)}</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        ${matricula ? mkBtn(matricula) : ''}
+        ${parcelas.map(mkBtn).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>🏅 ${d.nome}</h2>
+  ${resumo}
+  <p class="sec">Parcelas por atleta</p>
+  ${atletasHtml || '<div class="empty">Nenhuma mensalista cadastrada.</div>'}`;
+}
+
+async function toggleParcelaSem(parcelaId, pago, campId) {
+  await api('campeonatos_semestral.php','PUT',{parcela_id:parcelaId, pago});
+  verDetalhesSemestral(campId);
 }
 
 async function abrirNovoCampeonato(tipo) {
@@ -1723,6 +1868,12 @@ async function abrirNovoCampeonato(tipo) {
           <option value="2">2x</option>
           <option value="3" selected>3x</option>
         </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="inp" style="flex:1;">
+        <label>Valor avulsa (R$)</label>
+        <input type="number" id="nc-val-avulsa" placeholder="Ex: 55,00" step="0.01" min="0" value="55">
       </div>
     </div>
     <div style="background:white;border:1.5px solid #f5b800;border-radius:10px;padding:12px;margin-bottom:8px;">
@@ -1777,7 +1928,8 @@ async function salvarNovoCampeonato(tipo) {
     const n_jogos        = parseInt(document.getElementById('nc-njogos').value||0);
     const n_parcelas     = parseInt(document.getElementById('nc-parcelas').value||3);
     const valor_matricula= parseFloat(document.getElementById('nc-matricula').value||0);
-    res = await api('campeonatos_semestral.php','POST',{id,nome,local_jogo:local,custo_total,custo_tecnico,n_jogos,n_parcelas,valor_matricula,inscricoes});
+    const valor_avulsa   = parseFloat(document.getElementById('nc-val-avulsa').value||55);
+    res = await api('campeonatos_semestral.php','POST',{id,nome,local_jogo:local,custo_total,custo_tecnico,n_jogos,n_parcelas,valor_matricula,valor_avulsa,inscricoes});
   } else {
     res = await api('campeonatos.php','POST',{id,nome,local_jogo:local,inscricoes});
   }

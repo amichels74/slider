@@ -51,6 +51,19 @@ if ($method === 'GET') {
         }
     }
     $camp['atletas'] = array_values($atletasMap);
+
+    // Receita de avulsas convocadas em jogos deste campeonato
+    $stmt = $db->prepare("
+        SELECT COALESCE(SUM(p.valor), 0) AS receita_avulsas, COUNT(p.id) AS n_avulsas
+        FROM participacoes p
+        JOIN jogos j ON j.id = p.jogo_id
+        WHERE j.campeonato_id = ? AND p.tipo = 'avulsa'
+    ");
+    $stmt->execute([$id]);
+    $fin = $stmt->fetch();
+    $camp['receita_avulsas'] = floatval($fin['receita_avulsas']);
+    $camp['n_participacoes_avulsa'] = intval($fin['n_avulsas']);
+
     jsonResponse($camp);
 }
 
@@ -65,6 +78,7 @@ if ($method === 'POST') {
     $n_jogos         = intval($input['n_jogos'] ?? 0);
     $n_parcelas      = intval($input['n_parcelas'] ?? 3);
     $valor_matricula = floatval($input['valor_matricula'] ?? 0);
+    $valor_avulsa    = floatval($input['valor_avulsa'] ?? 55);
     $inscricoes      = $input['inscricoes'] ?? [];
 
     if (!$id || !$nome) jsonResponse(['erro' => 'ID e nome obrigatórios'], 400);
@@ -76,9 +90,9 @@ if ($method === 'POST') {
     $db->beginTransaction();
     try {
         $db->prepare("
-            INSERT INTO campeonatos (id, nome, local_jogo, ativo, tipo, custo_total, custo_tecnico, n_jogos, n_parcelas, valor_matricula)
-            VALUES (?, ?, ?, 1, 'semestral', ?, ?, ?, ?, ?)
-        ")->execute([$id, $nome, $local, $custo_total, $custo_tecnico, $n_jogos, $n_parcelas, $valor_matricula ?: null]);
+            INSERT INTO campeonatos (id, nome, local_jogo, ativo, tipo, custo_total, custo_tecnico, n_jogos, n_parcelas, valor_matricula, valor_avulsa)
+            VALUES (?, ?, ?, 1, 'semestral', ?, ?, ?, ?, ?, ?)
+        ")->execute([$id, $nome, $local, $custo_total, $custo_tecnico, $n_jogos, $n_parcelas, $valor_matricula ?: null, $valor_avulsa]);
 
         $nMensalistas = count(array_filter($inscricoes, fn($i) => $i['tipo'] === 'mensalista'));
         $valorParcela = $nMensalistas > 0
