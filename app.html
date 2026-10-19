@@ -1727,8 +1727,9 @@ async function carregarCampeonatos() {
     const tipoBadge = c.tipo==='semestral'
       ? `<span class="badge" style="background:#fffbe6;color:#92400E;">Semestral</span>`
       : `<span class="badge bgr">Mensal</span>`;
+    const saldo = parseFloat(c.saldo_caixa||0);
     const infoExtra = c.tipo==='semestral'
-      ? `<div style="font-size:11px;color:#aaa;margin-top:2px;">${c.n_jogos||0} jogos · ${c.n_parcelas||3}x parcelas</div>`
+      ? `<div style="font-size:11px;color:#aaa;margin-top:2px;">${c.n_jogos||0} jogos · ${c.n_parcelas||3}x parcelas${saldo>0?` · <span style="color:#92400E;font-weight:700;">💰 ${R(saldo)} em caixa</span>`:''}</div>`
       : '';
     return `
     <div class="card" style="padding:14px 16px;">
@@ -1810,16 +1811,19 @@ async function verDetalhesSemestral(campId) {
   if (!d) { mb.innerHTML += '<div class="empty">Erro ao carregar.</div>'; return; }
 
   // Receita avulsas dos jogos já registrados
-  const recAvulsas = parseFloat(d.receita_avulsas || 0);
-  const custoTotal = parseFloat(d.custo_total || 0) + parseFloat(d.custo_tecnico || 0);
-  const saldoCaixa = recAvulsas; // avulsas vão pro caixa
-  const custoLiq   = Math.max(0, custoTotal - recAvulsas);
-  const nMens      = (d.atletas||[]).filter(a=>a.tipo==='mensalista').length;
+  const recAvulsas  = parseFloat(d.receita_avulsas || 0);
+  const saldoAnter  = parseFloat(d.saldo_caixa || 0);
+  const custoTotal  = parseFloat(d.custo_total || 0) + parseFloat(d.custo_tecnico || 0);
+  const totalCaixa  = saldoAnter + recAvulsas;
+  const custoLiq    = Math.max(0, custoTotal - totalCaixa);
+  const nMens       = (d.atletas||[]).filter(a=>a.tipo==='mensalista').length;
 
   // Resumo financeiro
   const resumo = `
   <div style="background:#1a3f8f;border-radius:14px;padding:16px 18px;margin-bottom:16px;color:white;">
-    <div style="font-size:16px;font-weight:800;margin-bottom:12px;">🏅 ${d.nome}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="font-size:16px;font-weight:800;">🏅 ${d.nome}</div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div style="background:rgba(255,255,255,.12);border-radius:10px;padding:10px 12px;">
         <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700;">Custo total</div>
@@ -1827,14 +1831,20 @@ async function verDetalhesSemestral(campId) {
         <div style="font-size:10px;opacity:.6;margin-top:2px;">${d.n_jogos||0} jogos · ${d.n_parcelas||3}x parcelas</div>
       </div>
       <div style="background:rgba(245,184,0,.2);border-radius:10px;padding:10px 12px;border:1px solid rgba(245,184,0,.4);">
-        <div style="font-size:10px;color:#f5b800;text-transform:uppercase;font-weight:700;">💰 Caixa avulsas</div>
-        <div style="font-size:18px;font-weight:800;margin-top:2px;color:#f5b800;">${R(saldoCaixa)}</div>
-        <div style="font-size:10px;opacity:.6;margin-top:2px;">receita de avulsas convocadas</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:10px;color:#f5b800;text-transform:uppercase;font-weight:700;">💰 Total no caixa</div>
+          <button onclick="editarSaldoCaixa('${campId}',${saldoAnter})" title="Editar saldo anterior"
+            style="background:rgba(245,184,0,.3);border:none;border-radius:6px;color:#f5b800;font-size:11px;font-weight:700;cursor:pointer;padding:2px 7px;">✏️</button>
+        </div>
+        <div style="font-size:18px;font-weight:800;margin-top:2px;color:#f5b800;">${R(totalCaixa)}</div>
+        <div style="font-size:10px;opacity:.7;margin-top:4px;">
+          ${saldoAnter>0?`<span style="color:#fde68a;">↩ Anterior: ${R(saldoAnter)}</span> + `:''}<span>Avulsas: ${R(recAvulsas)}</span>
+        </div>
       </div>
       <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;">
         <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700;">Custo líquido</div>
         <div style="font-size:18px;font-weight:800;margin-top:2px;">${R(custoLiq)}</div>
-        <div style="font-size:10px;opacity:.6;margin-top:2px;">após receita avulsas</div>
+        <div style="font-size:10px;opacity:.6;margin-top:2px;">custo − caixa</div>
       </div>
       <div style="background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;">
         <div style="font-size:10px;opacity:.7;text-transform:uppercase;font-weight:700;">Por mensalista</div>
@@ -1888,6 +1898,35 @@ async function verDetalhesSemestral(campId) {
 
 async function toggleParcelaSem(parcelaId, pago, campId) {
   await api('campeonatos_semestral.php','PUT',{parcela_id:parcelaId, pago});
+  verDetalhesSemestral(campId);
+}
+
+async function editarSaldoCaixa(campId, saldoAtual) {
+  const val = await new Promise(resolve => {
+    const bg = document.getElementById('dialog-bg');
+    const msg = document.getElementById('dialog-msg');
+    const extra = document.getElementById('dialog-extra');
+    const btns = document.getElementById('dialog-btns');
+    msg.textContent = '💰 Saldo em caixa do semestre anterior';
+    extra.innerHTML = `<input id="dlg-saldo" type="number" step="0.01" min="0" value="${saldoAtual.toFixed(2)}"
+      style="width:100%;padding:10px 12px;font-size:16px;border:1.5px solid #ddd;border-radius:10px;text-align:right;">`;
+    btns.innerHTML = '';
+    const btnCancel = document.createElement('button');
+    btnCancel.className = 'btn'; btnCancel.textContent = 'Cancelar';
+    btnCancel.onclick = () => { bg.style.display='none'; extra.innerHTML=''; resolve(null); };
+    const btnOk = document.createElement('button');
+    btnOk.className = 'btn btn-p'; btnOk.textContent = 'Salvar';
+    btnOk.onclick = () => {
+      const v = parseFloat(document.getElementById('dlg-saldo').value);
+      bg.style.display='none'; extra.innerHTML='';
+      resolve(isNaN(v) ? null : v);
+    };
+    btns.appendChild(btnCancel); btns.appendChild(btnOk);
+    bg.style.display = 'flex';
+    setTimeout(()=>document.getElementById('dlg-saldo')?.focus(),50);
+  });
+  if (val === null) return;
+  await api('campeonatos_semestral.php','PUT',{camp_id:campId, saldo_caixa:val});
   verDetalhesSemestral(campId);
 }
 

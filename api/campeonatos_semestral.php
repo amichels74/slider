@@ -9,6 +9,14 @@ if ($method === 'GET') {
     $id = $_GET['id'] ?? '';
     if (!$id) jsonResponse(['erro' => 'ID obrigatório'], 400);
 
+    // Garante coluna saldo_caixa
+    $dbName = $db->query("SELECT DATABASE()")->fetchColumn();
+    $chk = $db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='campeonatos' AND COLUMN_NAME='saldo_caixa'");
+    $chk->execute([$dbName]);
+    if (!$chk->fetchColumn()) {
+        $db->exec("ALTER TABLE campeonatos ADD COLUMN saldo_caixa DECIMAL(10,2) NOT NULL DEFAULT 0");
+    }
+
     $stmt = $db->prepare("SELECT * FROM campeonatos WHERE id = ?");
     $stmt->execute([$id]);
     $camp = $stmt->fetch();
@@ -134,9 +142,26 @@ if ($method === 'POST') {
     }
 }
 
-// PUT → marcar parcela como paga/pendente
+// PUT → marcar parcela como paga/pendente  OU  atualizar saldo_caixa
 if ($method === 'PUT') {
-    $input     = json_decode(file_get_contents('php://input'), true);
+    $input = json_decode(file_get_contents('php://input'), true);
+
+    // Atualizar saldo_caixa do campeonato
+    if (isset($input['saldo_caixa']) && isset($input['camp_id'])) {
+        $campId     = $input['camp_id'];
+        $saldoCaixa = floatval($input['saldo_caixa']);
+        // Garante que a coluna existe
+        $dbName = $db->query("SELECT DATABASE()")->fetchColumn();
+        $chk = $db->prepare("SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=? AND TABLE_NAME='campeonatos' AND COLUMN_NAME='saldo_caixa'");
+        $chk->execute([$dbName]);
+        if (!$chk->fetchColumn()) {
+            $db->exec("ALTER TABLE campeonatos ADD COLUMN saldo_caixa DECIMAL(10,2) NOT NULL DEFAULT 0");
+        }
+        $db->prepare("UPDATE campeonatos SET saldo_caixa = ? WHERE id = ?")->execute([$saldoCaixa, $campId]);
+        jsonResponse(['ok' => true]);
+    }
+
+    // Marcar parcela como paga/pendente
     $parcelaId = intval($input['parcela_id'] ?? 0);
     $pago      = intval($input['pago'] ?? 0);
     if (!$parcelaId) jsonResponse(['erro' => 'parcela_id obrigatório'], 400);
