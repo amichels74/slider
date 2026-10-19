@@ -21,12 +21,12 @@ if (count($jogos) > 0) {
 
 $db->beginTransaction();
 try {
-    // cobranças / pagamentos ligados ao campeonato
-    $db->prepare("DELETE FROM pagamentos  WHERE campeonato_id = ?")->execute([$id]);
-    $db->prepare("DELETE FROM fechamentos WHERE campeonato_id = ?")->execute([$id]);
-    // históricos
-    $db->prepare("DELETE FROM historico_status WHERE campeonato_id = ?")->execute([$id]);
-    $db->prepare("DELETE FROM historico_tipo   WHERE campeonato_id = ?")->execute([$id]);
+    // tabelas opcionais — só deleta se existirem
+    $tabelas = ['pagamentos','fechamentos','historico_status','historico_tipo','cobrancas'];
+    foreach ($tabelas as $t) {
+        $chk = $db->query("SHOW TABLES LIKE '$t'")->fetch();
+        if ($chk) $db->prepare("DELETE FROM $t WHERE campeonato_id = ?")->execute([$id]);
+    }
     // participações → jogos
     $db->prepare("DELETE p FROM participacoes p JOIN jogos j ON j.id = p.jogo_id WHERE j.campeonato_id = ?")->execute([$id]);
     $db->prepare("DELETE FROM jogos WHERE campeonato_id = ?")->execute([$id]);
