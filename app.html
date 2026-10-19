@@ -161,6 +161,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .modal h2{font-size:17px;font-weight:800;margin-bottom:16px;color:var(--blue);}
 .close{float:right;background:none;border:none;font-size:24px;color:#bbb;cursor:pointer;line-height:1;}
 
+/* ── ATHLETE GRID TABLE ── */
+.atl-grid-wrap{overflow-x:auto;border-radius:14px;border:1px solid var(--border);background:white;box-shadow:0 1px 5px rgba(0,0,0,.05);}
+.atl-grid{border-collapse:collapse;min-width:600px;width:100%;}
+.atl-grid th{background:var(--blue);color:white;padding:10px 12px;font-size:11px;font-weight:700;text-align:center;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
+.atl-grid th:first-child{text-align:left;min-width:160px;border-radius:14px 0 0 0;}
+.atl-grid th:last-child{border-radius:0 14px 0 0;}
+.atl-grid td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;font-size:13px;}
+.atl-grid tr:last-child td{border-bottom:none;}
+.atl-grid tr:hover td{background:#fafbff;}
+.atl-grid td:first-child{font-weight:600;color:var(--text);}
+.grid-tipo{display:inline-flex;align-items:center;justify-content:center;min-width:84px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;}
+.grid-tipo.mensalista{background:var(--blue-l);color:var(--blue);}
+.grid-tipo.avulsa{background:#FEF3C7;color:#92400E;}
+.grid-tipo.nao{background:#f3f4f6;color:#9ca3af;}
+.grid-tipo:hover{filter:brightness(.92);}
+
 /* ── MISC ── */
 .empty{text-align:center;padding:40px 20px;color:#bbb;font-size:14px;}
 .empty span{font-size:36px;display:block;margin-bottom:10px;}
@@ -291,11 +307,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 
   <div id="page-atl" class="page">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <span class="sec" style="margin:0;">Atletas</span>
-      <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovaAtleta()">+ Nova</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" id="atl-view-lista" onclick="setAtlView('lista')" style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">☰ Lista</button>
+        <button class="btn btn-sm" id="atl-view-grid"  onclick="setAtlView('grid')">⊞ Tabela</button>
+        <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovaAtleta()">+ Nova</button>
+      </div>
     </div>
-    <div style="display:flex;gap:6px;margin:10px 0 14px;flex-wrap:wrap;">
+    <!-- filtros (só na lista) -->
+    <div id="atl-filtros" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
       <button class="btn btn-sm" id="at-todas"       onclick="filtrarAtletas('todas')"       style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">Todas</button>
       <button class="btn btn-sm" id="at-avulsas"     onclick="filtrarAtletas('avulsas')">Avulsas</button>
       <button class="btn btn-sm" id="at-mensalistas" onclick="filtrarAtletas('mensalistas')">Mensalistas</button>
@@ -303,12 +324,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <button class="btn btn-sm" id="at-inativas"    onclick="filtrarAtletas('inativas')">Inativas</button>
     </div>
     <div id="atl-content"><div class="loading">Carregando...</div></div>
+    <div id="atl-grid" style="display:none;overflow-x:auto;"></div>
   </div>
 
   <div id="page-camp" class="page">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <span class="sec" style="margin:0;">Campeonatos</span>
-      <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovoCampeonato()">+ Novo</button>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-sm" style="background:#1a3f8f;color:white;border-color:#1a3f8f;" onclick="abrirNovoCampeonato('mensal')">+ Mensal</button>
+        <button class="btn btn-sm" style="background:#f5b800;color:#1a3f8f;border-color:#e0a800;font-weight:700;" onclick="abrirNovoCampeonato('semestral')">+ Semestral</button>
+      </div>
     </div>
     <div id="camp-content"><div class="loading">Carregando...</div></div>
   </div>
@@ -1638,27 +1663,72 @@ async function carregarCampeonatos() {
   const el = document.getElementById('camp-content');
   const res = await api('campeonatos.php');
   if (!res || !res.length) { el.innerHTML='<div class="empty"><span>🏆</span>Nenhum campeonato.</div>'; return; }
-  el.innerHTML = res.map(c=>`
-    <div class="card" style="padding:12px 14px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div><div style="font-size:15px;font-weight:700;">${c.nome}</div>
-          <div style="font-size:12px;color:#aaa;">${c.local_jogo||''} · ${c.total_atletas||0} atletas</div></div>
-        <span class="badge ${c.ativo=='1'?'bg':'bgr'}">${c.ativo=='1'?'Ativo':'Inativo'}</span>
+  el.innerHTML = res.map(c=>{
+    const tipoBadge = c.tipo==='semestral'
+      ? `<span class="badge" style="background:#fffbe6;color:#92400E;">Semestral</span>`
+      : `<span class="badge bgr">Mensal</span>`;
+    const infoExtra = c.tipo==='semestral'
+      ? `<div style="font-size:11px;color:#aaa;margin-top:2px;">${c.n_jogos||0} jogos · ${c.n_parcelas||3}x parcelas</div>`
+      : '';
+    return `
+    <div class="card" style="padding:14px 16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+        <div style="flex:1;">
+          <div style="font-size:15px;font-weight:700;">${c.nome}</div>
+          <div style="font-size:12px;color:#aaa;">${c.local_jogo||''} · ${c.total_atletas||0} atletas</div>
+          ${infoExtra}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          ${tipoBadge}
+          <span class="badge ${c.ativo=='1'?'bg':'bgr'}">${c.ativo=='1'?'Ativo':'Inativo'}</span>
+          ${podeExcluir()?`<button onclick="excluirCampeonato('${c.id}','${c.nome.replace(/'/g,'\\\'')}')" style="background:none;border:none;color:#ccc;font-size:18px;cursor:pointer;line-height:1;padding:0 2px;" title="Excluir">🗑️</button>`:''}
+        </div>
       </div>
-    </div>`).join('');
-  // Atualiza select de campeonatos nos formulários
+    </div>`;
+  }).join('');
   atualizarSelectCamps(res);
 }
 
-async function abrirNovoCampeonato() {
+async function excluirCampeonato(id, nome) {
+  if (!podeExcluir()) { await vAlert('Sem permissão.'); return; }
+  if (!await vConfirmDelete(`Excluir campeonato "${nome}"?\n\nIsso remove todas as inscrições. Jogos registrados impedem a exclusão.`)) return;
+  const res = await api('campeonatos_delete.php','DELETE',{id});
+  if (res && res.ok) { await vAlert('Campeonato excluído.'); carregarCampeonatos(); }
+  else await vAlert(res?.erro||'Erro ao excluir.');
+}
+
+async function abrirNovoCampeonato(tipo) {
+  tipo = tipo || 'mensal';
   const atletas = await api('atletas.php') || [];
   const ativas = atletas.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status==='ativa'));
   const mb = document.getElementById('modal-body');
-  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
-  <h2>Novo campeonato</h2>
+
+  const camposBase = `
   <div class="inp"><label>Nome</label><input type="text" id="nc-nome" placeholder="Ex: CIL Segunda"></div>
   <div class="inp"><label>Local</label><input type="text" id="nc-local" placeholder="Ex: CIL, Bivolt..."></div>
-  <div class="inp"><label>ID (sem espaços)</label><input type="text" id="nc-id" placeholder="Ex: cilSegunda"></div>
+  <div class="inp"><label>ID (sem espaços)</label><input type="text" id="nc-id" placeholder="Ex: cilSegunda"></div>`;
+
+  const camposSemestral = tipo==='semestral' ? `
+  <div style="background:#fffbe6;border:1.5px solid #f5b800;border-radius:12px;padding:14px;margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:700;color:#92400E;text-transform:uppercase;margin-bottom:10px;">📅 Configuração semestral</div>
+    <div style="display:flex;gap:10px;">
+      <div class="inp" style="flex:1;"><label>Custo total (R$)</label><input type="number" id="nc-custo-total" placeholder="Ex: 2800" step="0.01"></div>
+      <div class="inp" style="flex:1;"><label>Custo técnico (R$)</label><input type="number" id="nc-custo-tec" placeholder="Ex: 1200" step="0.01"></div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <div class="inp" style="flex:1;"><label>Nº de jogos</label><input type="number" id="nc-njogos" placeholder="Ex: 14" min="1"></div>
+      <div class="inp" style="flex:1;"><label>Parcelas</label>
+        <select id="nc-parcelas">
+          <option value="1">1x (sem parcelar)</option>
+          <option value="2">2x</option>
+          <option value="3" selected>3x</option>
+        </select>
+      </div>
+    </div>
+    <div class="info" style="font-size:12px;">O valor por parcela é calculado automaticamente dividindo o custo total pelo número de mensalistas inscritas.</div>
+  </div>` : '';
+
+  const listaAtletas = `
   <p class="sec">Atletas participantes</p>
   <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;max-height:300px;overflow-y:auto;">
   ${ativas.map(a=>`<div class="row" style="gap:10px;">
@@ -1671,13 +1741,18 @@ async function abrirNovoCampeonato() {
       <option value="organizadora">Organizadora</option>
     </select>
   </div>`).join('')}
-  </div>
-  <button class="btn btn-p" onclick="salvarNovoCampeonato()">Criar campeonato</button>`;
+  </div>`;
+
+  mb.innerHTML = `<button class="close" onclick="fecharModal()">×</button>
+  <h2>${tipo==='semestral'?'🏅 Novo campeonato semestral':'🏆 Novo campeonato mensal'}</h2>
+  ${camposBase}${camposSemestral}${listaAtletas}
+  <button class="btn btn-p" onclick="salvarNovoCampeonato('${tipo}')">Criar campeonato</button>`;
   window._novoCampAtletas = ativas.map(a=>a.id);
   document.getElementById('modal-bg').style.display='flex';
 }
 
-async function salvarNovoCampeonato() {
+async function salvarNovoCampeonato(tipo) {
+  tipo = tipo || 'mensal';
   const atletaIds = window._novoCampAtletas || [];
   const nome  = document.getElementById('nc-nome').value.trim();
   const local = document.getElementById('nc-local').value.trim();
@@ -1686,7 +1761,17 @@ async function salvarNovoCampeonato() {
   const inscricoes = atletaIds
     .map(aid=>({atleta_id:aid,tipo:document.getElementById('nc-tipo-'+aid).value}))
     .filter(i=>i.tipo!=='nao');
-  const res = await api('campeonatos.php','POST',{id,nome,local_jogo:local,inscricoes});
+
+  let res;
+  if (tipo === 'semestral') {
+    const custo_total   = parseFloat(document.getElementById('nc-custo-total').value||0);
+    const custo_tecnico = parseFloat(document.getElementById('nc-custo-tec').value||0);
+    const n_jogos       = parseInt(document.getElementById('nc-njogos').value||0);
+    const n_parcelas    = parseInt(document.getElementById('nc-parcelas').value||3);
+    res = await api('campeonatos_semestral.php','POST',{id,nome,local_jogo:local,custo_total,custo_tecnico,n_jogos,n_parcelas,inscricoes});
+  } else {
+    res = await api('campeonatos.php','POST',{id,nome,local_jogo:local,inscricoes});
+  }
   if (res && res.ok) { fecharModal(); atualizarSelectCamps(res.camps); carregarCampeonatos(); await vAlert(`"${nome}" criado com ${inscricoes.length} atletas!`); }
   else await vAlert(res?.erro||'Erro ao criar campeonato.');
 }
@@ -1695,6 +1780,86 @@ function atualizarSelectCamps(camps) {
   const sel = document.getElementById('j-camp');
   if (!sel || !camps) return;
   sel.innerHTML = camps.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+}
+
+// ── GRADE DE ATLETAS POR CAMPEONATO ──────────────────
+var atlViewMode = 'lista';
+
+function setAtlView(mode) {
+  atlViewMode = mode;
+  const btnL = document.getElementById('atl-view-lista');
+  const btnG = document.getElementById('atl-view-grid');
+  const filtros = document.getElementById('atl-filtros');
+  const content = document.getElementById('atl-content');
+  const grid    = document.getElementById('atl-grid');
+
+  if (mode === 'grid') {
+    btnL.style.cssText = ''; btnG.style.cssText = 'background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;';
+    filtros.style.display = 'none';
+    content.style.display = 'none';
+    grid.style.display = 'block';
+    renderAtlGrid();
+  } else {
+    btnG.style.cssText = ''; btnL.style.cssText = 'background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;';
+    filtros.style.display = '';
+    content.style.display = 'block';
+    grid.style.display = 'none';
+  }
+}
+
+async function renderAtlGrid() {
+  const el = document.getElementById('atl-grid');
+  el.innerHTML = '<div class="loading">Carregando...</div>';
+  const camps = await api('campeonatos.php') || [];
+  const atletas = todosAtletas || await api('atletas.php') || [];
+  const ativas = atletas.filter(a => a.inscricoes && a.inscricoes.some(i => i.status !== 'inativa'));
+
+  if (!camps.length) { el.innerHTML='<div class="empty"><span>🏆</span>Nenhum campeonato.</div>'; return; }
+
+  const thead = `<tr>
+    <th style="text-align:left;min-width:160px;padding-left:16px;">Atleta</th>
+    ${camps.map(c=>`<th>${c.nome}</th>`).join('')}
+  </tr>`;
+
+  const tbody = ativas.map(a => {
+    const cells = camps.map(c => {
+      const insc = (a.inscricoes||[]).find(i=>i.campeonato_id===c.id);
+      const tipo = insc ? insc.tipo : 'nao';
+      const label = tipo==='mensalista'?'Mensalista':tipo==='avulsa'?'Avulsa':tipo==='organizadora'?'Org.':'—';
+      return `<td style="text-align:center;">
+        <button class="grid-tipo ${tipo}" onclick="toggleGridTipo('${a.id}','${c.id}','${tipo}')">${label}</button>
+      </td>`;
+    }).join('');
+    return `<tr>
+      <td style="padding-left:16px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="av" style="${avS((a.inscricoes||[])[0]?.tipo||'mensalista')};width:28px;height:28px;font-size:10px;">${ini(a.nome)}</div>
+          <span>${a.nome}</span>
+        </div>
+      </td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  el.innerHTML = `<div class="atl-grid-wrap"><table class="atl-grid"><thead>${thead}</thead><tbody>${tbody}</tbody></table></div>`;
+}
+
+async function toggleGridTipo(atletaId, campId, tipoAtual) {
+  const ciclo = {mensalista:'avulsa', avulsa:'nao', nao:'mensalista', organizadora:'mensalista'};
+  const novoTipo = ciclo[tipoAtual] || 'mensalista';
+
+  if (novoTipo === 'nao') {
+    if (!await vConfirmDelete(`Remover esta atleta do campeonato?`)) return;
+    // Remove inscrição — chama endpoint de remover do campeonato
+    await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,status:'inativa',status_desde:dataHoje()});
+  } else if (tipoAtual === 'nao') {
+    await api('atletas.php','POST',{atleta_id:atletaId,campeonato_id:campId,tipo:novoTipo});
+  } else {
+    const mesAtual = new Date().toISOString().slice(0,7);
+    await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,tipo_novo:novoTipo,mes_vigencia:mesAtual});
+  }
+  await carregarAtletas();
+  renderAtlGrid();
 }
 
 // ── EXCLUIR ATLETA ───────────────────────────────────────
