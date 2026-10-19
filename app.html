@@ -2177,7 +2177,8 @@ async function renderAtlGrid() {
       if (va < vb) return -dir;
       if (va > vb) return dir;
     }
-    return 0;
+    // desempate: sempre alfabético por nome
+    return a.nome.toLowerCase() < b.nome.toLowerCase() ? -1 : 1;
   });
 
   const sortIco = (col) => {
