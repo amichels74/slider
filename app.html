@@ -751,6 +751,12 @@ async function verJogo(id) {
   });
   atletasDoCamp.sort((a,b)=>a.nome.localeCompare(b.nome));
 
+  // Atletas que podem ser convidadas como avulsa: NÃO são mensalistas neste camp
+  const mensalistasIds = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista').map(a=>String(a.id)));
+  window._todasAtlConvite = todasAtl
+    .filter(a => a.status !== 'inativa' && !mensalistasIds.has(String(a.id)))
+    .sort((a,b)=>a.nome.localeCompare(b.nome));
+
   const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&(a.status==='ativa'||a.status==='ausente'));
   const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&(a.status==='ativa'||a.status==='ausente'));
   const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
@@ -837,12 +843,49 @@ async function verJogo(id) {
     </div>
   </div>` : ''}
 
+  ${!isFeriasJogo ? `
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Convidar atleta (avulsa)</div>
+    <input type="text" id="ej-busca-convite" placeholder="Buscar nome..." oninput="filtrarConvite()"
+      style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;margin-bottom:6px;">
+    <div id="ej-lista-convite" style="background:white;border:1px solid #eee;border-radius:12px;max-height:180px;overflow-y:auto;padding:4px 14px;display:none;"></div>
+  </div>` : ''}
+
   <button class="btn btn-p" onclick="salvarEdicaoJogo('${j.id}','${j.campeonato_id}',${isFeriasJogo})">💾 Salvar alterações</button>
   <button class="btn" style="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;" onclick="excluirJogo('${j.id}')">🗑️ Excluir jogo</button>`;
 
   window._editAvulsas = new Set([...presencasPresentes].map(String));
   window._editIsFeriasJogo = isFeriasJogo;
   if (!desktop) document.getElementById('modal-bg').style.display='flex';
+}
+
+function filtrarConvite() {
+  const q = (document.getElementById('ej-busca-convite')?.value || '').toLowerCase().trim();
+  const lista = document.getElementById('ej-lista-convite');
+  if (!lista) return;
+  if (!q) { lista.style.display = 'none'; lista.innerHTML = ''; return; }
+  const atl = (window._todasAtlConvite || []).filter(a => a.nome.toLowerCase().includes(q)).slice(0, 20);
+  if (!atl.length) { lista.style.display = 'none'; return; }
+  lista.style.display = 'block';
+  lista.innerHTML = atl.map(a => {
+    const checked = window._editAvulsas?.has(String(a.id));
+    return `<div class="row" onclick="toggleConvite('${String(a.id).replace(/'/g,"\\'")}','${a.nome.replace(/'/g,"\\'")}')" style="cursor:pointer;gap:10px;">
+      <div class="av" style="background:#f0f4fa;color:#1a3f8f;">${ini(a.nome)}</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;">${a.nome}</div>
+      </div>
+      <div class="chk ${checked?'on':''}" id="ej-chk-${String(a.id)}">${checked?'✓':''}</div>
+    </div>`;
+  }).join('');
+}
+
+function toggleConvite(id, nome) {
+  id = String(id);
+  if (!window._editAvulsas) window._editAvulsas = new Set();
+  if (window._editAvulsas.has(id)) window._editAvulsas.delete(id);
+  else window._editAvulsas.add(id);
+  const el = document.getElementById('ej-chk-'+id);
+  if (el) { el.className='chk'+(window._editAvulsas.has(id)?' on':''); el.textContent=window._editAvulsas.has(id)?'✓':''; }
 }
 
 function toggleAvulsaEdit(id) {
