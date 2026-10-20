@@ -757,7 +757,7 @@ async function verJogo(id) {
     .filter(a => a.status !== 'inativa' && !mensalistasIds.has(String(a.id)))
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&(a.status==='ativa'||a.status==='ausente'));
+  const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&a.status==='ativa');
   const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&(a.status==='ativa'||a.status==='ausente'));
   const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
