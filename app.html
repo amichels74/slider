@@ -843,6 +843,16 @@ async function verJogo(id) {
     </div>
   </div>` : ''}
 
+  <div style="margin-bottom:14px;">
+    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📷 Fotos do jogo</div>
+    <div id="ej-galeria" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
+    <label style="display:inline-flex;align-items:center;gap:6px;background:#f0f4fa;border:1.5px dashed #c5d5ef;border-radius:10px;padding:8px 16px;cursor:pointer;font-size:13px;color:#185FA5;font-weight:600;">
+      ＋ Adicionar foto
+      <input type="file" accept="image/*" multiple style="display:none;" onchange="uploadFotosJogo('${j.id}',this)">
+    </label>
+    <div id="ej-foto-status" style="font-size:12px;color:#aaa;margin-top:4px;"></div>
+  </div>
+
   ${!isFeriasJogo ? `
   <div style="margin-bottom:14px;">
     <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Convidar atleta (avulsa)</div>
@@ -857,6 +867,7 @@ async function verJogo(id) {
   window._editAvulsas = new Set([...presencasPresentes].map(String));
   window._editIsFeriasJogo = isFeriasJogo;
   if (!desktop) document.getElementById('modal-bg').style.display='flex';
+  setTimeout(() => carregarFotosJogo(j.id), 50);
 }
 
 function filtrarConvite() {
@@ -886,6 +897,66 @@ function toggleConvite(id, nome) {
   else window._editAvulsas.add(id);
   const el = document.getElementById('ej-chk-'+id);
   if (el) { el.className='chk'+(window._editAvulsas.has(id)?' on':''); el.textContent=window._editAvulsas.has(id)?'✓':''; }
+}
+
+async function carregarFotosJogo(jogoId) {
+  const galeria = document.getElementById('ej-galeria');
+  if (!galeria) return;
+  const fotos = await fetch('api/fotos.php?jogo_id=' + encodeURIComponent(jogoId), {
+    headers: { Authorization: 'Bearer ' + TOKEN() }
+  }).then(r=>r.json()).catch(()=>[]);
+  renderGaleria(jogoId, fotos);
+}
+
+function renderGaleria(jogoId, fotos) {
+  const galeria = document.getElementById('ej-galeria');
+  if (!galeria) return;
+  if (!fotos.length) { galeria.innerHTML = ''; return; }
+  galeria.innerHTML = fotos.map(f => `
+    <div style="position:relative;width:80px;height:80px;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">
+      <img src="api/fotos.php?id=${f.id}&token=${encodeURIComponent(TOKEN())}"
+        style="width:100%;height:100%;object-fit:cover;cursor:pointer;"
+        onclick="abrirFotoGrande(${f.id})" loading="lazy">
+      <button onclick="excluirFoto(${f.id},'${jogoId}')"
+        style="position:absolute;top:2px;right:2px;background:rgba(0,0,0,.55);color:white;border:none;border-radius:50%;width:20px;height:20px;font-size:12px;cursor:pointer;line-height:20px;padding:0;text-align:center;">×</button>
+    </div>`).join('');
+}
+
+async function uploadFotosJogo(jogoId, input) {
+  const status = document.getElementById('ej-foto-status');
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  if (status) status.textContent = `Enviando ${files.length} foto(s)...`;
+  for (const file of files) {
+    const fd = new FormData();
+    fd.append('jogo_id', jogoId);
+    fd.append('foto', file);
+    await fetch('api/fotos.php', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + TOKEN() },
+      body: fd
+    }).catch(()=>{});
+  }
+  input.value = '';
+  if (status) status.textContent = '';
+  carregarFotosJogo(jogoId);
+}
+
+async function excluirFoto(id, jogoId) {
+  await fetch('api/fotos.php?id=' + id, {
+    method: 'DELETE',
+    headers: { Authorization: 'Bearer ' + TOKEN() }
+  });
+  carregarFotosJogo(jogoId);
+}
+
+function abrirFotoGrande(id) {
+  const url = 'api/fotos.php?id=' + id + '&token=' + encodeURIComponent(TOKEN());
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';
+  overlay.onclick = () => overlay.remove();
+  overlay.innerHTML = `<img src="${url}" style="max-width:95vw;max-height:95vh;border-radius:12px;object-fit:contain;">`;
+  document.body.appendChild(overlay);
 }
 
 function toggleAvulsaEdit(id) {
