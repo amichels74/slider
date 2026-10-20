@@ -1029,6 +1029,24 @@ async function carregarAtletasJogo() {
       window._campSemestral = null;
       const aviso = document.getElementById('j-aviso-semestral');
       if (aviso) aviso.style.display = 'none';
+
+      // Mensal: pré-preenche com valores do último jogo deste campeonato
+      const mesSel = document.getElementById('j-filtro-mes')?.value || '';
+      const jogosRecentes = await api('jogos.php?camp=' + encodeURIComponent(camp) + '&mes=' + mesSel) || [];
+      // Tenta mês atual; se vazio, busca mês anterior
+      let ultimo = jogosRecentes[0];
+      if (!ultimo) {
+        const [y, m] = (mesSel || (new Date().toISOString().slice(0,7))).split('-').map(Number);
+        const d = new Date(y, m - 2, 1);
+        const mesAnt = d.toISOString().slice(0,7);
+        const jogosAnt = await api('jogos.php?camp=' + encodeURIComponent(camp) + '&mes=' + mesAnt) || [];
+        ultimo = jogosAnt[0];
+      }
+      if (ultimo) {
+        document.getElementById('j-custo').value   = parseFloat(ultimo.custo_jogo   || 0).toFixed(2);
+        document.getElementById('j-tecnico').value = parseFloat(ultimo.custo_tecnico || 0).toFixed(2);
+        document.getElementById('j-avulsa').value  = parseFloat(ultimo.valor_avulsa  || 55).toFixed(2);
+      }
     }
   }
 
