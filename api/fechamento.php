@@ -199,7 +199,8 @@ if ($method === 'GET') {
             if ($p['status'] === 'retorno') {
                 $parciaisValores[] = ['atleta' => $p['atleta'], 'fracao' => $p['fracao'], 'status' => 'retorno'];
             } elseif ($p['status'] === 'inativa') {
-                $parciaisValores[] = ['atleta' => $p['atleta'], 'fracao' => 1.0, 'status' => 'inativa'];
+                $fracao = $p['total_jogos'] > 0 ? $p['jogos_antes'] / $p['total_jogos'] : 0;
+                $parciaisValores[] = ['atleta' => $p['atleta'], 'fracao' => $fracao, 'status' => 'inativa'];
             } else {
                 $fracao = $p['total_jogos'] > 0 ? $p['jogos_antes'] / $p['total_jogos'] : 0;
                 $parciaisValores[] = ['atleta' => $p['atleta'], 'fracao' => $fracao, 'status' => 'ausente'];
@@ -322,7 +323,7 @@ if ($method === 'POST') {
                 } else {
                     $jogosAntes2 = $desde2 ? count(array_filter($jogos, fn($j) => $j['data_jogo'] < $desde2)) : 0;
                     if ($jogosAntes2 > 0) {
-                        $fracao2 = $status2==='inativa' ? 1.0 : ($totalJogos2>0 ? $jogosAntes2/$totalJogos2 : 0);
+                        $fracao2 = $totalJogos2>0 ? $jogosAntes2/$totalJogos2 : 0;
                         $parciais2[] = ['id' => $aid, 'fracao' => $fracao2];
                     }
                 }
