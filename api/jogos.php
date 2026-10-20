@@ -44,7 +44,7 @@ if ($method === 'GET') {
             $s = $db->prepare("
                 SELECT p.id, p.atleta_id, a.nome, p.valor
                 FROM participacoes p JOIN atletas a ON a.id = p.atleta_id
-                WHERE p.jogo_id = ? AND p.tipo = 'avulsa' ORDER BY a.nome
+                WHERE p.jogo_id = ? AND p.tipo IN ('avulsa','experimental') ORDER BY a.nome
             ");
             $s->execute([$j['id']]);
             $j['avulsas']   = $s->fetchAll();
@@ -61,7 +61,8 @@ if ($method === 'POST') {
     $custoJogo   = floatval($input['custo_jogo']    ?? 0);
     $custoTec    = floatval($input['custo_tecnico'] ?? 0);
     $valAvulsa   = floatval($input['valor_avulsa']  ?? 55);
-    $avulsasIds  = $input['avulsas_ids']   ?? [];
+    $avulsasIds       = $input['avulsas_ids']      ?? [];
+    $experimentaisIds = $input['experimentais_ids'] ?? [];
     $obs         = $input['observacoes']   ?? '';
     $mesFerias   = intval($input['mes_ferias'] ?? 0);
     $presencasIds= $input['presencas_ids'] ?? [];
@@ -94,6 +95,10 @@ if ($method === 'POST') {
         foreach ($avulsasIds as $aid) {
             $stmtP->execute([$jogoId, $aid, $valAvulsa]);
         }
+        $stmtE = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'experimental',35.00)");
+        foreach ($experimentaisIds as $aid) {
+            $stmtE->execute([$jogoId, $aid]);
+        }
     }
 
     jsonResponse(['ok' => true, 'jogo_id' => $jogoId]);
@@ -106,7 +111,8 @@ if ($method === 'PUT') {
     $custoJogo   = floatval($input['custo_jogo']    ?? 0);
     $custoTec    = floatval($input['custo_tecnico'] ?? 0);
     $valAvulsa   = floatval($input['valor_avulsa']  ?? 55);
-    $avulsasIds  = $input['avulsas_ids']   ?? [];
+    $avulsasIds       = $input['avulsas_ids']      ?? [];
+    $experimentaisIds = $input['experimentais_ids'] ?? [];
     $obs         = $input['observacoes']   ?? '';
     $mesFerias   = intval($input['mes_ferias'] ?? 0);
     $presencasIds= $input['presencas_ids'] ?? [];
@@ -135,6 +141,10 @@ if ($method === 'PUT') {
         $stmtP = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'avulsa',?)");
         foreach ($avulsasIds as $aid) {
             $stmtP->execute([$jogoId, $aid, $valAvulsa]);
+        }
+        $stmtE = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'experimental',35.00)");
+        foreach ($experimentaisIds as $aid) {
+            $stmtE->execute([$jogoId, $aid]);
         }
     }
 

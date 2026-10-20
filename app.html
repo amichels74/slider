@@ -176,6 +176,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .grid-tipo.avulsa{background:#D1FAE5;color:#065F46;}
 .grid-tipo.nao{background:#f3f4f6;color:#9ca3af;}
 .grid-tipo.afastada{background:#FEE2E2;color:#991B1B;}
+.grid-tipo.experimental{background:#FEF3C7;color:#92400E;}
 .grid-tipo:hover{filter:brightness(.92);}
 .grid-tipo-sel{display:inline-block;min-width:90px;padding:4px 6px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;text-align:center;appearance:none;-webkit-appearance:none;}
 
@@ -323,6 +324,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="atl-filtros" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
       <button class="btn btn-sm" id="at-todas"       onclick="filtrarAtletas('todas')"       style="background:#e8eef8;color:#1a3f8f;border-color:#c5d5ef;">Todas</button>
       <button class="btn btn-sm" id="at-avulsas"     onclick="filtrarAtletas('avulsas')">Avulsas</button>
+      <button class="btn btn-sm" id="at-experimentais" onclick="filtrarAtletas('experimentais')">Experimentais</button>
       <button class="btn btn-sm" id="at-mensalistas" onclick="filtrarAtletas('mensalistas')">Mensalistas</button>
       <button class="btn btn-sm" id="at-ausentes"    onclick="filtrarAtletas('ausentes')">Ausentes</button>
       <button class="btn btn-sm" id="at-inativas"    onclick="filtrarAtletas('inativas')">Inativas</button>
@@ -432,7 +434,7 @@ async function api(url, method='GET', body=null) {
 // ── HELPERS ───────────────────────────────────────────
 const R   = n => 'R$ '+parseFloat(n||0).toFixed(2).replace('.',',');
 const ini = n => n.split(' ').slice(0,2).map(x=>x[0]).join('').toUpperCase();
-const avS = t => t==='avulsa'?'background:#FAEEDA;color:#854F0B;':t==='organizadora'?'background:#EEEDFE;color:#3C3489;':t==='tecnico'?'background:#E8F5E9;color:#2E7D32;':'background:#B5D4F4;color:#0C447C;';
+const avS = t => t==='avulsa'?'background:#FAEEDA;color:#854F0B;':t==='experimental'?'background:#FEF3C7;color:#92400E;':t==='organizadora'?'background:#EEEDFE;color:#3C3489;':t==='tecnico'?'background:#E8F5E9;color:#2E7D32;':'background:#B5D4F4;color:#0C447C;';
 const fmtD= d => { if(!d)return''; const[y,m,dd]=d.split('-'); return dd+'/'+m+'/'+y; };
 const fmtDataHora = s => { if(!s)return''; const d=new Date(s.replace(' ','T')); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
 const fmtMes = m => { const[y,mo]=m.split('-'); const n=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']; return n[parseInt(mo)-1]+'/'+y; };
@@ -750,6 +752,7 @@ async function verJogo(id) {
     atletasDoCamp.push({ ...a, tipo: insc.tipo, status: insc.status });
   });
   atletasDoCamp.sort((a,b)=>a.nome.localeCompare(b.nome));
+  window._atletasDoCampEdit = atletasDoCamp;
 
   // Atletas que podem ser convidadas como avulsa: NÃO são mensalistas neste camp
   const mensalistasIds = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista').map(a=>String(a.id)));
@@ -757,7 +760,7 @@ async function verJogo(id) {
     .filter(a => a.status !== 'inativa' && !mensalistasIds.has(String(a.id)))
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 
-  const avulsasDoCamp = atletasDoCamp.filter(a=>a.tipo==='avulsa'&&a.status==='ativa');
+  const avulsasDoCamp = atletasDoCamp.filter(a=>(a.tipo==='avulsa'||a.tipo==='experimental')&&a.status==='ativa');
   const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&(a.status==='ativa'||a.status==='ausente'));
   const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
@@ -813,8 +816,8 @@ async function verJogo(id) {
   <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;margin-bottom:12px;">
     ${atletasParaExibir.map(a=>{
       const checked = presencasPresentes.has(String(a.id));
-      const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-      const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
+      const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='experimental' ? '#FEF3C7' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
+      const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='experimental' ? '#92400E' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
       const eid = String(a.id).replace(/'/g,"\\'");
       const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
       return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;${a.status==='ausente'?'opacity:0.75;':''}">
@@ -974,7 +977,10 @@ async function salvarEdicaoJogo(jogoId, campId, isFeriasJogo) {
   const tecnico  = parseFloat(document.getElementById('ej-tecnico').value)||0;
   const avulsa   = parseFloat(document.getElementById('ej-avulsa').value)||55;
   const obs      = document.getElementById('ej-obs').value;
-  const avIds    = [...(window._editAvulsas||[])];
+  const allSelIds = [...(window._editAvulsas||[])];
+  const expSet = new Set((window._atletasDoCampEdit||[]).filter(a=>a.tipo==='experimental').map(a=>String(a.id)));
+  const avIds  = allSelIds.filter(id => !expSet.has(id));
+  const expIds = allSelIds.filter(id => expSet.has(id));
 
   if (!data) { await vAlert('Informe a data'); return; }
 
@@ -983,8 +989,9 @@ async function salvarEdicaoJogo(jogoId, campId, isFeriasJogo) {
     data_jogo: data, custo_jogo: custo, custo_tecnico: tecnico,
     valor_avulsa: avulsa, observacoes: obs,
     avulsas_ids: isFeriasJogo ? [] : avIds,
+    experimentais_ids: isFeriasJogo ? [] : expIds,
     mes_ferias: isFeriasJogo ? 1 : 0,
-    presencas_ids: isFeriasJogo ? avIds : []
+    presencas_ids: isFeriasJogo ? allSelIds : []
   };
   const res = await api('jogos.php', 'PUT', payload);
   if (res && res.ok) { fecharModal(); carregarListaJogos(); await vAlert('Jogo atualizado!'); }
@@ -1069,9 +1076,9 @@ async function carregarAtletasJogo() {
     document.getElementById('j-lista-avulsas').innerHTML = todas.length === 0
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta no sistema.</div>'
       : todas.map(a => {
-          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
-          const tipoLabel = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
+          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='experimental' ? '#FEF3C7' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
+          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='experimental' ? '#92400E' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
+          const tipoLabel = a.tipo==='avulsa' ? 'avulsa' : a.tipo==='experimental' ? 'experimental R$35' : a.tipo==='mensalista' ? 'mensalista' : a.tipo;
           const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
           return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
             <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
@@ -1105,14 +1112,16 @@ async function carregarAtletasJogo() {
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta neste campeonato.</div>'
       : selecionaveis.map(a=>{
           const isSem = !!window._campSemestral;
-          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
+          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='experimental' ? '#FEF3C7' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
+          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='experimental' ? '#92400E' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
           const valAvulsa = isSem ? parseFloat(window._campSemestral.valor_avulsa||55) : null;
           const label = a.tipo==='avulsa'
             ? (isSem ? `avulsa convocada · paga ${R(valAvulsa)}` : 'avulsa')
-            : a.tipo==='mensalista'
-              ? (isSem ? 'mensalista · sem cobrança extra' : 'mensalista')
-              : a.tipo;
+            : a.tipo==='experimental'
+              ? 'experimental · paga R$35'
+              : a.tipo==='mensalista'
+                ? (isSem ? 'mensalista · sem cobrança extra' : 'mensalista')
+                : a.tipo;
           const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
           return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
             <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
@@ -1138,16 +1147,19 @@ async function salvarJogo() {
   const isSem = !!window._campSemestral;
   const selecionados = [...selAvulsas];
 
-  let avulsas_ids, presencas_ids;
+  let avulsas_ids, experimentais_ids, presencas_ids;
   if (mesFerias) {
-    avulsas_ids   = [];
+    avulsas_ids      = [];
+    experimentais_ids = [];
     presencas_ids = selecionados;
   } else if (isSem) {
     // Semestral: avulsas convocadas → cobrar; mensalistas presentes → só registrar como presença
-    avulsas_ids   = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='avulsa'; });
-    presencas_ids = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo!=='avulsa'; });
+    avulsas_ids      = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='avulsa'; });
+    experimentais_ids = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='experimental'; });
+    presencas_ids    = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo!=='avulsa' && a.tipo!=='experimental'; });
   } else {
-    avulsas_ids   = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return !a || a.tipo==='avulsa'; });
+    avulsas_ids      = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return !a || a.tipo==='avulsa'; });
+    experimentais_ids = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='experimental'; });
     presencas_ids = [];
   }
 
@@ -1158,6 +1170,7 @@ async function salvarJogo() {
     custo_tecnico: parseFloat(document.getElementById('j-tecnico').value)||0,
     valor_avulsa:  parseFloat(document.getElementById('j-avulsa').value)||55,
     avulsas_ids,
+    experimentais_ids,
     observacoes: document.getElementById('j-obs').value,
     mes_ferias: mesFerias ? 1 : 0,
     presencas_ids
@@ -1409,7 +1422,7 @@ function renderPagamentos(pags, preview, mes) {
       html += `<div class="row" style="gap:8px;">
         <div style="flex:1;">
           <div style="font-size:14px;font-weight:500;">${a.nome} ${credTag}</div>
-          <div style="font-size:12px;font-weight:600;color:${pago?'#3B6D11':'#A32D2D'};">${R(valor)} ${pago?'pago ✓':'pendente'}${notaProp} · <span class="badge ${tipo==='avulsa'?'ba':'bb'}">${tipo}</span></div>
+          <div style="font-size:12px;font-weight:600;color:${pago?'#3B6D11':'#A32D2D'};">${R(valor)} ${pago?'pago ✓':'pendente'}${notaProp} · <span class="badge ${tipo==='avulsa'?'ba':tipo==='experimental'?'" style="background:#FEF3C7;color:#92400E;"':'bb'}">${tipo}</span></div>
         </div>
         <button style="background:none;border:1px solid #e0e0e0;border-radius:8px;font-size:16px;padding:4px 7px;cursor:pointer;color:#3B6D11;" title="Crédito/devolução" onclick="abrirCreditoAtleta('${a.id}','${a.nome}','${c.campeonato_id}','${mes}')">💰</button>
         <div class="tog ${pago?'on':''}" id="${togId}" onclick="togglePagamento('${a.id}','${c.campeonato_id}','${mes}',${valor},'${tipo}','${togId}')"></div>
@@ -1448,10 +1461,11 @@ function filtrarAtletas(f) {
   filtroAtl = f;
   const cores = {
     todas:['#e8eef8','#1a3f8f','#c5d5ef'], avulsas:['#FAEEDA','#854F0B','#FAC775'],
+    experimentais:['#FEF3C7','#92400E','#FDE68A'],
     mensalistas:['#D1FAE5','#065F46','#9FE1CB'], ausentes:['#FCEBEB','#A32D2D','#F7C1C1'],
     inativas:['#f0f0f2','#555','#ccc']
   };
-  ['todas','avulsas','mensalistas','ausentes','inativas'].forEach(t => {
+  ['todas','avulsas','experimentais','mensalistas','ausentes','inativas'].forEach(t => {
     const el = document.getElementById('at-'+t); if (!el) return;
     const on = t===f;
     el.style.background = on ? cores[t][0] : '';
@@ -1465,6 +1479,7 @@ function renderAtletas() {
   let lista = todosAtletas;
   if (filtroAtl==='todas')       lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status!=='inativa'));
   if (filtroAtl==='avulsas')     lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.tipo==='avulsa'&&i.status!=='inativa'));
+  if (filtroAtl==='experimentais') lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.tipo==='experimental'&&i.status!=='inativa'));
   if (filtroAtl==='mensalistas') lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.tipo==='mensalista'&&i.status==='ativa'));
   if (filtroAtl==='ausentes')    lista = lista.filter(a=>a.inscricoes&&a.inscricoes.some(i=>i.status==='ausente'));
   if (filtroAtl==='inativas')    lista = lista.filter(a=>a.inscricoes&&a.inscricoes.every(i=>i.status==='inativa'));
@@ -1473,7 +1488,7 @@ function renderAtletas() {
   el.innerHTML = lista.map(a => {
     const insOrdenadas = [...(a.inscricoes||[])].sort((x,y)=>x.tipo==='mensalista'?-1:1);
     const badges = insOrdenadas.map(i => {
-      const tip = i.tipo==='avulsa'?'<span class="badge ba">Avulsa</span>':i.tipo==='organizadora'?'<span class="badge bgr">Organizadora</span>':i.tipo==='tecnico'?'<span class="badge" style="background:#E8F5E9;color:#2E7D32;">Técnico</span>':'<span class="badge bb">Mensalista</span>';
+      const tip = i.tipo==='avulsa'?'<span class="badge ba">Avulsa</span>':i.tipo==='experimental'?'<span class="badge" style="background:#FEF3C7;color:#92400E;">Experimental</span>':i.tipo==='organizadora'?'<span class="badge bgr">Organizadora</span>':i.tipo==='tecnico'?'<span class="badge" style="background:#E8F5E9;color:#2E7D32;">Técnico</span>':'<span class="badge bb">Mensalista</span>';
       const st  = i.status==='ausente'?'<span class="badge br">Ausente</span>':i.status==='inativa'?'<span class="badge bgr">Inativa</span>':'';
       return `<span style="font-size:11px;color:#bbb;">${i.camp_nome}</span> ${tip}${st}`;
     }).join('&nbsp;&nbsp;');
@@ -1536,6 +1551,7 @@ function abrirGerenciar(id) {
       <select id="gt-tiponovo-${idx}" onchange="toggleVigencia(${idx},'${ins.tipo}')" style="width:100%;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;margin-bottom:8px;">
         <option value="mensalista" ${ins.tipo==='mensalista'?'selected':''}>Mensalista — paga todo mês</option>
         <option value="avulsa" ${ins.tipo==='avulsa'?'selected':''}>Avulsa — paga só quando vem</option>
+        <option value="experimental" ${ins.tipo==='experimental'?'selected':''}>Experimental — paga R$ 35 por jogo</option>
         <option value="organizadora" ${ins.tipo==='organizadora'?'selected':''}>Organizadora — nunca paga</option>
         <option value="tecnico" ${ins.tipo==='tecnico'?'selected':''}>Técnico — sem cobrança</option>
       </select>
@@ -1657,6 +1673,7 @@ function abrirGerenciar(id) {
       <select id="add-tipo" style="flex:1;padding:8px;font-size:13px;border:1.5px solid #e8e8e8;border-radius:8px;background:white;color:#1a1a2e;">
         <option value="mensalista">Mensalista</option>
         <option value="avulsa">Avulsa</option>
+        <option value="experimental">Experimental</option>
       </select>
     </div>
     <button class="btn" style="width:100%;margin-top:8px;font-size:13px;" onclick="adicionarCampeonato('${a.id}')">Inscrever neste campeonato</button>
@@ -1828,6 +1845,7 @@ async function abrirNovaAtleta() {
           <option value="nao">Não inscrever</option>
           <option value="mensalista">Mensalista</option>
           <option value="avulsa">Avulsa</option>
+          <option value="experimental">Experimental — R$ 35 por jogo</option>
           <option value="organizadora">Organizadora</option>
           <option value="tecnico">Técnico (sem cobrança)</option>
         </select>
@@ -2339,8 +2357,8 @@ async function renderAtlGrid() {
     return ia - ib;
   });
 
-  const cores = {mensalista:'background:#1a3f8f;color:white;', avulsa:'background:#D1FAE5;color:#065F46;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
-  const estadoOrd = {mensalista:0, avulsa:1, afastada:2, organizadora:3, nao:4};
+  const cores = {mensalista:'background:#1a3f8f;color:white;', avulsa:'background:#D1FAE5;color:#065F46;', experimental:'background:#FEF3C7;color:#92400E;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+  const estadoOrd = {mensalista:0, avulsa:1, experimental:2, afastada:3, organizadora:4, nao:5};
 
   // Ordenação multi-coluna
   const getVal = (a, col) => {
@@ -2403,6 +2421,7 @@ async function renderAtlGrid() {
           <option value="nao"   ${estado==='nao'?'selected':''}>—</option>
           <option value="mensalista" ${estado==='mensalista'?'selected':''}>Mensalista</option>
           <option value="avulsa"     ${estado==='avulsa'?'selected':''}>Avulsa</option>
+          <option value="experimental" ${estado==='experimental'?'selected':''}>Experimental</option>
           <option value="afastada"   ${estado==='afastada'?'selected':''}>Afastada</option>
           <option value="organizadora" ${estado==='organizadora'?'selected':''}>Org.</option>
         </select>
@@ -2473,7 +2492,7 @@ function gridDrop(e, targetCampId) {
 async function mudarGridEstado(atletaId, campId, estadoAtual, novoEstado, selEl) {
   if (novoEstado === estadoAtual) return;
 
-  const cores = {mensalista:'background:#1a3f8f;color:white;', avulsa:'background:#D1FAE5;color:#065F46;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
+  const cores = {mensalista:'background:#1a3f8f;color:white;', avulsa:'background:#D1FAE5;color:#065F46;', experimental:'background:#FEF3C7;color:#92400E;', afastada:'background:#FEE2E2;color:#991B1B;', nao:'background:#f3f4f6;color:#9ca3af;', organizadora:'background:#E8F5E9;color:#2E7D32;'};
 
   const revert = () => { selEl.value = estadoAtual; selEl.style.cssText = cores[estadoAtual]||cores.nao; };
 
@@ -2506,7 +2525,7 @@ async function mudarGridEstado(atletaId, campId, estadoAtual, novoEstado, selEl)
 
   } else {
     // Troca de tipo (mensalista ↔ avulsa ↔ organizadora)
-    const label = novoEstado==='avulsa'?'Avulsa':novoEstado==='organizadora'?'Org.':'Mensalista';
+    const label = novoEstado==='avulsa'?'Avulsa':novoEstado==='experimental'?'Experimental':novoEstado==='organizadora'?'Org.':'Mensalista';
     const mes = await vPickMes(`A partir de quando passa a ser ${label}?`);
     if (!mes) { revert(); return; }
     await api('atletas.php','PUT',{atleta_id:atletaId,campeonato_id:campId,tipo_novo:novoEstado,mes_vigencia:mes});

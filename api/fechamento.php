@@ -147,8 +147,8 @@ if ($method === 'GET') {
             $custoTotal += $extrasTotal;
         } catch (Exception $e) {}
 
-        // Receita de avulsas (apenas jogos normais — tipo='avulsa')
-        $stmtRec = $db->prepare("SELECT SUM(p.valor) FROM participacoes p JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo='avulsa'");
+        // Receita de avulsas/experimentais (apenas jogos normais)
+        $stmtRec = $db->prepare("SELECT SUM(p.valor) FROM participacoes p JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo IN ('avulsa','experimental')");
         $stmtRec->execute([$cId, $mes]);
         $recAvulsas = floatval($stmtRec->fetchColumn() ?? 0);
 
@@ -244,7 +244,7 @@ if ($method === 'GET') {
             usort($cobFerias, fn($a,$b) => strcmp($a['nome'],$b['nome']));
         }
 
-        $stmtAv = $db->prepare("SELECT a.id, a.nome, SUM(p.valor) AS total_pago FROM participacoes p JOIN atletas a ON a.id=p.atleta_id JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo='avulsa' GROUP BY a.id, a.nome");
+        $stmtAv = $db->prepare("SELECT a.id, a.nome, SUM(p.valor) AS total_pago FROM participacoes p JOIN atletas a ON a.id=p.atleta_id JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo IN ('avulsa','experimental') GROUP BY a.id, a.nome");
         $stmtAv->execute([$cId, $mes]);
 
         $resultado[] = [
@@ -292,7 +292,7 @@ if ($method === 'POST') {
         // ---- Jogos normais: cota mensalista ----
         if ($jogos) {
             $custoTotal = array_sum(array_map(fn($j) => $j['custo_jogo'] + $j['custo_tecnico'], $jogos));
-            $stmtRec    = $db->prepare("SELECT SUM(p.valor) FROM participacoes p JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo='avulsa'");
+            $stmtRec    = $db->prepare("SELECT SUM(p.valor) FROM participacoes p JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo IN ('avulsa','experimental')");
             $stmtRec->execute([$cId, $mes]);
             $recAvulsas = floatval($stmtRec->fetchColumn() ?? 0);
 
@@ -342,7 +342,7 @@ if ($method === 'POST') {
             }
 
             // Avulsas normais
-            $stmtAv  = $db->prepare("SELECT a.id, SUM(p.valor) AS total FROM participacoes p JOIN atletas a ON a.id=p.atleta_id JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo='avulsa' GROUP BY a.id");
+            $stmtAv  = $db->prepare("SELECT a.id, SUM(p.valor) AS total FROM participacoes p JOIN atletas a ON a.id=p.atleta_id JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo IN ('avulsa','experimental') GROUP BY a.id");
             $stmtAv->execute([$cId, $mes]);
             $stmtInsAv = $db->prepare("INSERT IGNORE INTO fechamentos (mes_referencia, campeonato_id, atleta_id, tipo, valor) VALUES (?,?,?,'avulsa',?)");
             foreach ($stmtAv->fetchAll() as $av) { $stmtInsAv->execute([$mes, $cId, $av['id'], $av['total']]); $totalGerado++; }
