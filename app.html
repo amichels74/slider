@@ -767,6 +767,8 @@ async function verJogo(id) {
   atletasDoCamp.sort((a,b)=>a.nome.localeCompare(b.nome));
   window._atletasDoCampEdit = atletasDoCamp;
 
+  const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
+
   // Pré-constrói HTML da lista avulsas/convidadas (evita backticks aninhados no template)
   const _mensIds = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa').map(a=>String(a.id)));
   const _dispAtl = todasAtl.filter(a => a.status!=='inativa' && !_mensIds.has(String(a.id))).sort((a,b)=>a.nome.localeCompare(b.nome));
@@ -799,7 +801,6 @@ async function verJogo(id) {
 
   const avulsasDoCamp = atletasDoCamp.filter(a=>(a.tipo==='avulsa'||a.tipo==='experimental')&&a.status==='ativa');
   const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa');
-  const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
   const isFeriasJogo = !!(j.mes_ferias);
 
