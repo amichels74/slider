@@ -288,9 +288,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
             <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;" id="j-sec-atletas">Atletas presentes</div>
             <div id="j-count-sel" style="font-size:12px;color:#185FA5;font-weight:600;display:none;"></div>
           </div>
-          <p id="j-txt-atletas" style="font-size:13px;color:#aaa;margin:0 0 12px;">Selecione as avulsas que participaram.</p>
           <div id="j-info-ausentes" class="info" style="display:none;margin-bottom:10px;"></div>
-          <div id="j-lista-avulsas" style="border:1.5px solid #f0f0f4;border-radius:12px;overflow:hidden;min-height:50px;"></div>
+
+          <!-- Mensalistas do campeonato (informativo) -->
+          <div id="j-bloco-mensalistas" style="display:none;margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:#1a3f8f;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Mensalistas</div>
+            <div id="j-lista-mensalistas" style="border:1.5px solid #dce8f8;border-radius:12px;overflow:hidden;background:#f5f8ff;"></div>
+          </div>
+
+          <!-- Avulsas / convidadas (selecionáveis) -->
+          <div id="j-bloco-avulsas">
+            <div style="font-size:11px;font-weight:700;color:#854F0B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;" id="j-label-avulsas">Avulsas / Convidadas</div>
+            <div id="j-lista-avulsas" style="border:1.5px solid #f0f0f4;border-radius:12px;overflow:hidden;min-height:50px;"></div>
+          </div>
         </div>
 
         <button class="btn btn-p" onclick="salvarJogo()" style="width:100%;margin-top:20px;padding:14px;font-size:15px;font-weight:700;border-radius:14px;background:linear-gradient(135deg,#1a3f8f,#122d68);box-shadow:0 4px 14px rgba(26,63,143,0.3);">💾 Salvar jogo</button>
@@ -1090,52 +1100,97 @@ async function carregarAtletasJogo() {
     return;
   }
 
-  // Modo normal: busca todas as atletas do sistema e filtra pelas do campeonato
+  // Modo normal: busca todas as atletas do sistema
   const todasRaw = await api('atletas.php') || [];
   atletasJogo = [];
   const idsSeen = new Set();
   todasRaw.forEach(a => {
     if (idsSeen.has(a.id)) return;
-    const insc = (a.inscricoes || []).find(i => String(i.campeonato_id) === String(camp));
-    if (!insc) return;
     idsSeen.add(a.id);
-    atletasJogo.push({ ...a, tipo: insc.tipo, status: insc.status });
+    // inscrição neste campeonato (se existir)
+    const inscCamp = (a.inscricoes || []).find(i => String(i.campeonato_id) === String(camp));
+    const tipo   = inscCamp ? inscCamp.tipo   : 'externo';
+    const status = inscCamp ? inscCamp.status : 'ativa';
+    atletasJogo.push({ ...a, tipo, status, _inscCamp: inscCamp || null });
   });
   atletasJogo.sort((a, b) => a.nome.localeCompare(b.nome));
 
-  document.getElementById('j-info-ausentes').style.display='none';
+  document.getElementById('j-info-ausentes').style.display = 'none';
 
-  {
-    const isSemestral = !!window._campSemestral;
-    // Mensal: só avulsas e experimentais (mensalistas pagam por cota, não por presença)
-    // Semestral: todas (mensalistas são registradas como presença sem cobrança)
-    const selecionaveis = atletasJogo.filter(a =>
-      (a.status==='ativa'||a.status==='ausente') &&
-      (isSemestral || a.tipo==='avulsa' || a.tipo==='experimental')
-    );
-    document.getElementById('j-lista-avulsas').innerHTML = selecionaveis.length === 0
+  const isSemestral = !!window._campSemestral;
+
+  if (isSemestral) {
+    // Semestral: mostra todas do campeonato (mensalistas como presença, avulsas cobradas)
+    document.getElementById('j-bloco-mensalistas').style.display = 'none';
+    document.getElementById('j-label-avulsas').textContent = 'Atletas do campeonato';
+    const doCamp = atletasJogo.filter(a => a._inscCamp && (a.status==='ativa'||a.status==='ausente'));
+    document.getElementById('j-lista-avulsas').innerHTML = doCamp.length === 0
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta neste campeonato.</div>'
-      : selecionaveis.map(a=>{
-          const isSem = !!window._campSemestral;
-          const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='experimental' ? '#FEF3C7' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-          const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='experimental' ? '#92400E' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
-          const valAvulsa = isSem ? parseFloat(window._campSemestral.valor_avulsa||55) : null;
-          const label = a.tipo==='avulsa'
-            ? (isSem ? `avulsa convocada · paga ${R(valAvulsa)}` : 'avulsa')
-            : a.tipo==='experimental'
-              ? 'experimental · paga R$35'
-              : a.tipo==='mensalista'
-                ? (isSem ? 'mensalista · sem cobrança extra' : 'mensalista')
-                : a.tipo;
+      : doCamp.map(a => {
+          const valAvulsa = parseFloat(window._campSemestral.valor_avulsa||55);
+          const bg = a.tipo==='avulsa'?'#FAEEDA':a.tipo==='experimental'?'#FEF3C7':'#E6F1FB';
+          const cor = a.tipo==='avulsa'?'#854F0B':a.tipo==='experimental'?'#92400E':'#1a3f8f';
+          const label = a.tipo==='avulsa' ? `avulsa · paga ${R(valAvulsa)}`
+            : a.tipo==='experimental' ? 'experimental · paga R$35'
+            : 'mensalista · sem cobrança extra';
           const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
-          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;${a.status==='ausente'?'opacity:0.75;':''}">
+          return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
             <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
             <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
               <div style="font-size:11px;color:#999;">${label}${afastLabel}</div></div>
             <div class="chk" id="chk-${a.id}"></div>
           </div>`;
         }).join('');
+    return;
   }
+
+  // Mensal: mensalistas deste camp (informativo) + todos os demais (selecionáveis)
+  const mensalistasCamp = atletasJogo.filter(a =>
+    a._inscCamp && a.tipo==='mensalista' && a.status==='ativa'
+  );
+  const disponiveis = atletasJogo.filter(a =>
+    a.status !== 'inativa' &&
+    !(a._inscCamp && a.tipo==='mensalista' && a.status==='ativa')
+  );
+
+  // Bloco mensalistas (informativo, sem checkbox)
+  const blocoMens = document.getElementById('j-bloco-mensalistas');
+  if (mensalistasCamp.length > 0) {
+    blocoMens.style.display = 'block';
+    document.getElementById('j-lista-mensalistas').innerHTML = mensalistasCamp.map(a =>
+      `<div class="row" style="opacity:.8;">
+        <div class="av" style="background:#E6F1FB;color:#1a3f8f;">${ini(a.nome)}</div>
+        <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
+          <div style="font-size:11px;color:#aaa;">mensalista</div></div>
+        <div style="font-size:18px;color:#1a3f8f;">✓</div>
+      </div>`
+    ).join('');
+  } else {
+    blocoMens.style.display = 'none';
+  }
+
+  // Bloco avulsas/convidadas (selecionáveis)
+  document.getElementById('j-label-avulsas').textContent = 'Avulsas / Convidadas';
+  document.getElementById('j-lista-avulsas').innerHTML = disponiveis.length === 0
+    ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta disponível.</div>'
+    : disponiveis.map(a => {
+        const bg = a.tipo==='avulsa'?'#FAEEDA':a.tipo==='experimental'?'#FEF3C7':'#f0f0f2';
+        const cor = a.tipo==='avulsa'?'#854F0B':a.tipo==='experimental'?'#92400E':'#555';
+        // para externas: pega o nome do primeiro camp ativo dela
+        const inscAtiva = (a.inscricoes||[]).find(i=>i.status==='ativa'||i.status==='ausente');
+        const outroCamp = inscAtiva ? (inscAtiva.camp_nome||'outro camp.') : 'sem camp.';
+        const tipoLabel = a.tipo==='experimental' ? 'experimental · R$35'
+          : a.tipo==='avulsa' ? 'avulsa'
+          : a.tipo==='externo' ? `convidada · ${outroCamp}`
+          : a.tipo;
+        const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
+        return `<div class="row" onclick="toggleAvulsa('${a.id}')" style="cursor:pointer;">
+          <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
+          <div style="flex:1;"><div style="font-size:14px;">${a.nome}</div>
+            <div style="font-size:11px;color:#999;">${tipoLabel}${afastLabel}</div></div>
+          <div class="chk" id="chk-${a.id}"></div>
+        </div>`;
+      }).join('');
 }
 
 function toggleAvulsa(id) {
