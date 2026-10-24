@@ -791,13 +791,15 @@ async function verJogo(id) {
         const isExp = partTipo==='experimental';
         const isAv  = partTipo==='avulsa';
         const chkBg = isExp?'#92400E':isAv?'#854F0B':'';
+        const chkLabel = isExp?'exp.':isAv?'avulsa':'';
+        const chkStyle = chkBg ? ('background:'+chkBg+';'+(chkLabel?'width:auto;padding:0 7px;font-size:11px;font-weight:700;':'')) : '';
         const chkClass = (isExp||isAv)?'chk on':'chk';
         const eid = aid.replace(/'/g,"\\'");
         return '<div class="row" onclick="toggleAvulsaEdit(\'' + eid + '\')" style="cursor:pointer;gap:10px;">'
           + '<div class="av" style="background:' + bg + ';color:' + cor + ';">' + ini(a.nome) + '</div>'
           + '<div style="flex:1;"><div style="font-size:14px;">' + a.nome + '</div>'
           + '<div style="font-size:11px;color:#999;">' + tipoLabel + '</div></div>'
-          + '<div class="' + chkClass + '" id="ej-chk-' + aid + '" style="' + (chkBg?'background:'+chkBg+';':'') + '">' + ((isExp||isAv)?'✓':'') + '</div>'
+          + '<div class="' + chkClass + '" id="ej-chk-' + aid + '" style="' + chkStyle + '">' + chkLabel + '</div>'
           + '</div>';
       }).join('');
 
@@ -1016,9 +1018,13 @@ function _atualizarChkEdit(id) {
   if (!el) return;
   const isAv  = window._editAvulsas?.has(id);
   const isExp = window._editExperimentais?.has(id);
-  if (isAv)       { el.className='chk on'; el.textContent='✓'; el.style.background='#854F0B'; }
-  else if (isExp) { el.className='chk on'; el.textContent='✓'; el.style.background='#92400E'; }
-  else            { el.className='chk'; el.textContent=''; el.style.background=''; }
+  el.style.width = (isAv||isExp) ? 'auto' : '';
+  el.style.padding = (isAv||isExp) ? '0 7px' : '';
+  el.style.fontSize = (isAv||isExp) ? '11px' : '';
+  el.style.fontWeight = (isAv||isExp) ? '700' : '';
+  if (isAv)       { el.className='chk on'; el.textContent='avulsa'; el.style.background='#854F0B'; }
+  else if (isExp) { el.className='chk on'; el.textContent='exp.'; el.style.background='#92400E'; }
+  else            { el.className='chk'; el.textContent=''; el.style.background=''; el.style.width=''; el.style.padding=''; }
 }
 
 function toggleAvulsaEdit(id) {
@@ -1297,9 +1303,9 @@ function _atualizarChkAvulsa(id) {
   if (!el) return;
   const isAv  = selAvulsas.has(id);
   const isExp = selExperimentais.has(id);
-  if (isAv)  { el.className='chk on'; el.textContent='✓'; el.style.background='#854F0B'; }
-  else if (isExp) { el.className='chk on'; el.textContent='✓'; el.style.background='#92400E'; }
-  else       { el.className='chk'; el.textContent=''; el.style.background=''; }
+  if (isAv)  { el.className='chk on'; el.textContent='avulsa'; el.style.cssText='background:#854F0B;width:auto;padding:0 7px;font-size:11px;font-weight:700;'; }
+  else if (isExp) { el.className='chk on'; el.textContent='exp.'; el.style.cssText='background:#92400E;width:auto;padding:0 7px;font-size:11px;font-weight:700;'; }
+  else       { el.className='chk'; el.textContent=''; el.style.cssText=''; }
 }
 
 function toggleAvulsa(id) {
