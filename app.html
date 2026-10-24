@@ -1106,8 +1106,13 @@ async function carregarAtletasJogo() {
   document.getElementById('j-info-ausentes').style.display='none';
 
   {
-    // Mostra ativas + ausentes (afastadas podem jogar como avulsa)
-    const selecionaveis = atletasJogo.filter(a=>a.status==='ativa'||a.status==='ausente');
+    const isSemestral = !!window._campSemestral;
+    // Mensal: só avulsas e experimentais (mensalistas pagam por cota, não por presença)
+    // Semestral: todas (mensalistas são registradas como presença sem cobrança)
+    const selecionaveis = atletasJogo.filter(a =>
+      (a.status==='ativa'||a.status==='ausente') &&
+      (isSemestral || a.tipo==='avulsa' || a.tipo==='experimental')
+    );
     document.getElementById('j-lista-avulsas').innerHTML = selecionaveis.length === 0
       ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta neste campeonato.</div>'
       : selecionaveis.map(a=>{
