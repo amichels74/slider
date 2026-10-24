@@ -266,6 +266,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
           </div>
           <div style="display:flex;gap:10px;">
             <div class="inp" style="flex:1;"><label>Valor avulsa (R$)</label><input type="number" id="j-avulsa" value="55.00" step="0.5"></div>
+            <div class="inp" style="flex:1;"><label>Valor experimental (R$)</label><input type="number" id="j-experimental" value="35.00" step="0.5"></div>
+          </div>
+          <div style="display:flex;gap:10px;">
             <div class="inp" style="flex:1;"><label>Observações</label><input type="text" id="j-obs" placeholder="Opcional"></div>
           </div>
         </div>
@@ -666,7 +669,7 @@ async function renderDash() {
 }
 
 // ── JOGOS ─────────────────────────────────────────────
-let selAvulsas = new Set(), atletasJogo = [], mesFerias = false;
+let selAvulsas = new Set(), selExperimentais = new Set(), atletasJogo = [], mesFerias = false;
 
 function toggleMesFerias() {
   mesFerias = !mesFerias;
@@ -678,7 +681,7 @@ function toggleMesFerias() {
   if (info) info.style.display = mesFerias ? '' : 'none';
   if (sec) sec.textContent = 'Atletas presentes';
   if (txt) txt.style.display = mesFerias ? 'none' : '';
-  selAvulsas.clear();
+  selAvulsas.clear(); selExperimentais.clear();
   carregarAtletasJogo();
 }
 
@@ -691,7 +694,7 @@ function abrirFormJogo() {
   if (empty) empty.style.display='none';
   document.getElementById('form-jogo').style.display='block';
   document.getElementById('j-data').value = dataHoje();
-  selAvulsas.clear();
+  selAvulsas.clear(); selExperimentais.clear();
   mesFerias = false;
   const tog = document.getElementById('j-ferias-tog');
   const info = document.getElementById('j-ferias-info');
@@ -1018,7 +1021,7 @@ async function excluirJogo(id) {
 async function carregarAtletasJogo() {
   const camp = document.getElementById('j-camp').value;
   if (!camp && !mesFerias) return;
-  selAvulsas.clear();
+  selAvulsas.clear(); selExperimentais.clear();
   document.getElementById('j-lista-avulsas').innerHTML = '<div class="loading">Carregando...</div>';
 
   // Se campeonato semestral: pré-preenche custo por jogo
@@ -1060,9 +1063,10 @@ async function carregarAtletasJogo() {
         ultimo = jogosAnt[0];
       }
       if (ultimo) {
-        document.getElementById('j-custo').value   = parseFloat(ultimo.custo_jogo   || 0).toFixed(2);
-        document.getElementById('j-tecnico').value = parseFloat(ultimo.custo_tecnico || 0).toFixed(2);
-        document.getElementById('j-avulsa').value  = parseFloat(ultimo.valor_avulsa  || 55).toFixed(2);
+        document.getElementById('j-custo').value        = parseFloat(ultimo.custo_jogo        || 0).toFixed(2);
+        document.getElementById('j-tecnico').value      = parseFloat(ultimo.custo_tecnico      || 0).toFixed(2);
+        document.getElementById('j-avulsa').value       = parseFloat(ultimo.valor_avulsa       || 55).toFixed(2);
+        document.getElementById('j-experimental').value = parseFloat(ultimo.valor_experimental || 35).toFixed(2);
       }
     }
   }
@@ -1193,10 +1197,63 @@ async function carregarAtletasJogo() {
       }).join('');
 }
 
-function toggleAvulsa(id) {
-  if (selAvulsas.has(id)) selAvulsas.delete(id); else selAvulsas.add(id);
+function _atualizarChkAvulsa(id) {
   const el = document.getElementById('chk-'+id);
-  if (el) { el.className='chk'+(selAvulsas.has(id)?' on':''); el.textContent=selAvulsas.has(id)?'✓':''; }
+  if (!el) return;
+  const isAv  = selAvulsas.has(id);
+  const isExp = selExperimentais.has(id);
+  if (isAv)  { el.className='chk on'; el.textContent='✓'; el.style.background='#854F0B'; }
+  else if (isExp) { el.className='chk on'; el.textContent='✓'; el.style.background='#92400E'; }
+  else       { el.className='chk'; el.textContent=''; el.style.background=''; }
+}
+
+function toggleAvulsa(id) {
+  // Se já selecionada como qualquer tipo → desselecionr
+  if (selAvulsas.has(id) || selExperimentais.has(id)) {
+    selAvulsas.delete(id); selExperimentais.delete(id);
+    _atualizarChkAvulsa(id);
+    return;
+  }
+  // Perguntar: avulsa ou experimental?
+  const valAv  = parseFloat(document.getElementById('j-avulsa')?.value || document.getElementById('ej-avulsa')?.value || 55);
+  const valExp = parseFloat(document.getElementById('j-experimental')?.value || 35);
+  const a = atletasJogo.find(x => String(x.id) === String(id));
+  const nome = a ? a.nome : '';
+
+  // Mini picker inline
+  const existing = document.getElementById('picker-avulsa-exp');
+  if (existing) existing.remove();
+  const row = document.getElementById('chk-'+id)?.closest('.row');
+  if (!row) { selAvulsas.add(id); _atualizarChkAvulsa(id); return; }
+
+  const picker = document.createElement('div');
+  picker.id = 'picker-avulsa-exp';
+  picker.style.cssText = 'position:absolute;z-index:999;background:#fff;border:1.5px solid #ddd;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 14px;min-width:220px;';
+  picker.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:10px;">Como vai participar?</div>
+    <button onclick="event.stopPropagation();_escolherTipoPartic('${id}','avulsa');document.getElementById('picker-avulsa-exp').remove();"
+      style="width:100%;margin-bottom:6px;padding:9px 12px;border-radius:9px;border:1.5px solid #FAEEDA;background:#FAEEDA;color:#854F0B;font-weight:700;font-size:13px;cursor:pointer;text-align:left;">
+      Avulsa &nbsp;· ${R(valAv)}
+    </button>
+    <button onclick="event.stopPropagation();_escolherTipoPartic('${id}','experimental');document.getElementById('picker-avulsa-exp').remove();"
+      style="width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid #FEF3C7;background:#FEF3C7;color:#92400E;font-weight:700;font-size:13px;cursor:pointer;text-align:left;">
+      Experimental &nbsp;· ${R(valExp)}
+    </button>`;
+
+  // Posiciona abaixo do row
+  row.style.position = 'relative';
+  row.appendChild(picker);
+  // Fecha ao clicar fora
+  setTimeout(() => document.addEventListener('click', function _close(e) {
+    const p = document.getElementById('picker-avulsa-exp');
+    if (p && !p.contains(e.target)) { p.remove(); document.removeEventListener('click', _close); }
+  }), 10);
+}
+
+function _escolherTipoPartic(id, tipo) {
+  if (tipo === 'experimental') { selExperimentais.add(id); selAvulsas.delete(id); }
+  else                         { selAvulsas.add(id); selExperimentais.delete(id); }
+  _atualizarChkAvulsa(id);
 }
 
 async function salvarJogo() {
@@ -1205,30 +1262,31 @@ async function salvarJogo() {
   if (!data) { await vAlert('Informe a data'); return; }
 
   const isSem = !!window._campSemestral;
-  const selecionados = [...selAvulsas];
 
   let avulsas_ids, experimentais_ids, presencas_ids;
   if (mesFerias) {
     avulsas_ids      = [];
     experimentais_ids = [];
-    presencas_ids = selecionados;
+    presencas_ids = [...selAvulsas];
   } else if (isSem) {
-    // Semestral: avulsas convocadas → cobrar; mensalistas presentes → só registrar como presença
-    avulsas_ids      = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='avulsa'; });
-    experimentais_ids = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='experimental'; });
-    presencas_ids    = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo!=='avulsa' && a.tipo!=='experimental'; });
+    avulsas_ids      = [...selAvulsas];
+    experimentais_ids = [...selExperimentais];
+    // presença: selecionados que não estão em nenhum dos dois Sets
+    const todosSel = new Set([...selAvulsas, ...selExperimentais]);
+    presencas_ids = [...todosSel].filter(id => !selAvulsas.has(id) && !selExperimentais.has(id));
   } else {
-    avulsas_ids      = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return !a || a.tipo==='avulsa'; });
-    experimentais_ids = selecionados.filter(id => { const a = atletasJogo.find(x=>x.id===id); return a && a.tipo==='experimental'; });
+    avulsas_ids      = [...selAvulsas];
+    experimentais_ids = [...selExperimentais];
     presencas_ids = [];
   }
 
   const payload = {
     campeonato_id: camp,
     data_jogo: data,
-    custo_jogo:    parseFloat(document.getElementById('j-custo').value)||0,
-    custo_tecnico: parseFloat(document.getElementById('j-tecnico').value)||0,
-    valor_avulsa:  parseFloat(document.getElementById('j-avulsa').value)||55,
+    custo_jogo:      parseFloat(document.getElementById('j-custo').value)||0,
+    custo_tecnico:   parseFloat(document.getElementById('j-tecnico').value)||0,
+    valor_avulsa:    parseFloat(document.getElementById('j-avulsa').value)||55,
+    valor_experimental: parseFloat(document.getElementById('j-experimental').value)||35,
     avulsas_ids,
     experimentais_ids,
     observacoes: document.getElementById('j-obs').value,
@@ -1238,7 +1296,7 @@ async function salvarJogo() {
   const res = await api('jogos.php', 'POST', payload);
   if (res && res.ok) {
     window._campSemestral = null;
-    selAvulsas.clear(); mesFerias = false;
+    selAvulsas.clear(); selExperimentais.clear(); mesFerias = false;
     await vAlert('Jogo salvo!'); voltarListaJogos();
   } else await vAlert('Erro ao salvar jogo.');
 }

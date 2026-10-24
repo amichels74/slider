@@ -95,9 +95,9 @@ if ($method === 'POST') {
         foreach ($avulsasIds as $aid) {
             $stmtP->execute([$jogoId, $aid, $valAvulsa]);
         }
-        $stmtE = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'experimental',35.00)");
+        $stmtE = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'experimental',?)");
         foreach ($experimentaisIds as $aid) {
-            $stmtE->execute([$jogoId, $aid]);
+            $stmtE->execute([$jogoId, $aid, $valExperimental]);
         }
     }
 
@@ -110,7 +110,8 @@ if ($method === 'PUT') {
     $data        = $input['data_jogo']     ?? '';
     $custoJogo   = floatval($input['custo_jogo']    ?? 0);
     $custoTec    = floatval($input['custo_tecnico'] ?? 0);
-    $valAvulsa   = floatval($input['valor_avulsa']  ?? 55);
+    $valAvulsa      = floatval($input['valor_avulsa']       ?? 55);
+    $valExperimental= floatval($input['valor_experimental'] ?? 35);
     $avulsasIds       = $input['avulsas_ids']      ?? [];
     $experimentaisIds = $input['experimentais_ids'] ?? [];
     $obs         = $input['observacoes']   ?? '';
@@ -142,9 +143,9 @@ if ($method === 'PUT') {
         foreach ($avulsasIds as $aid) {
             $stmtP->execute([$jogoId, $aid, $valAvulsa]);
         }
-        $stmtE = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'experimental',35.00)");
+        $stmtE = $db->prepare("INSERT IGNORE INTO participacoes (jogo_id, atleta_id, tipo, valor) VALUES (?,?,'experimental',?)");
         foreach ($experimentaisIds as $aid) {
-            $stmtE->execute([$jogoId, $aid]);
+            $stmtE->execute([$jogoId, $aid, $valExperimental]);
         }
     }
 
