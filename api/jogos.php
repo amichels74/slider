@@ -16,9 +16,14 @@ if ($method === 'GET') {
     $where  = "WHERE j.mes_referencia = ?";
     if ($campId) { $where .= " AND j.campeonato_id = ?"; $params[] = $campId; }
 
+    // Garante coluna valor_experimental
+    try { $db->exec("ALTER TABLE jogos ADD COLUMN valor_experimental DECIMAL(10,2) DEFAULT 35.00"); } catch(Exception $e) {}
+
     $stmt = $db->prepare("
         SELECT j.id, j.campeonato_id, c.nome AS camp_nome, j.data_jogo,
-               j.mes_referencia, j.custo_jogo, j.custo_tecnico, j.valor_avulsa, j.observacoes,
+               j.mes_referencia, j.custo_jogo, j.custo_tecnico, j.valor_avulsa,
+               COALESCE(j.valor_experimental, 35) AS valor_experimental,
+               j.observacoes,
                (j.custo_jogo + j.custo_tecnico) AS custo_total,
                COALESCE(j.mes_ferias, 0) AS mes_ferias
         FROM jogos j
@@ -72,11 +77,10 @@ if ($method === 'POST') {
     $mes    = substr($data, 0, 7);
     $jogoId = 'j'.substr(md5(uniqid()), 0, 8);
 
-    // Tenta com mes_ferias; se a coluna não existir ainda, insere sem ela
     try {
-        $db->prepare("INSERT INTO jogos (id, campeonato_id, data_jogo, mes_referencia, custo_jogo, custo_tecnico, valor_avulsa, observacoes, mes_ferias)
-                      VALUES (?,?,?,?,?,?,?,?,?)")
-           ->execute([$jogoId, $campId, $data, $mes, $custoJogo, $custoTec, $valAvulsa, $obs, $mesFerias]);
+        $db->prepare("INSERT INTO jogos (id, campeonato_id, data_jogo, mes_referencia, custo_jogo, custo_tecnico, valor_avulsa, valor_experimental, observacoes, mes_ferias)
+                      VALUES (?,?,?,?,?,?,?,?,?,?)")
+           ->execute([$jogoId, $campId, $data, $mes, $custoJogo, $custoTec, $valAvulsa, $valExperimental, $obs, $mesFerias]);
     } catch (Exception $e) {
         $db->prepare("INSERT INTO jogos (id, campeonato_id, data_jogo, mes_referencia, custo_jogo, custo_tecnico, valor_avulsa, observacoes)
                       VALUES (?,?,?,?,?,?,?,?)")
@@ -123,8 +127,8 @@ if ($method === 'PUT') {
     $mes = substr($data, 0, 7);
 
     try {
-        $db->prepare("UPDATE jogos SET data_jogo=?, mes_referencia=?, custo_jogo=?, custo_tecnico=?, valor_avulsa=?, observacoes=?, mes_ferias=? WHERE id=?")
-           ->execute([$data, $mes, $custoJogo, $custoTec, $valAvulsa, $obs, $mesFerias, $jogoId]);
+        $db->prepare("UPDATE jogos SET data_jogo=?, mes_referencia=?, custo_jogo=?, custo_tecnico=?, valor_avulsa=?, valor_experimental=?, observacoes=?, mes_ferias=? WHERE id=?")
+           ->execute([$data, $mes, $custoJogo, $custoTec, $valAvulsa, $valExperimental, $obs, $mesFerias, $jogoId]);
     } catch (Exception $e) {
         $db->prepare("UPDATE jogos SET data_jogo=?, mes_referencia=?, custo_jogo=?, custo_tecnico=?, valor_avulsa=?, observacoes=? WHERE id=?")
            ->execute([$data, $mes, $custoJogo, $custoTec, $valAvulsa, $obs, $jogoId]);

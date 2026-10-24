@@ -817,34 +817,32 @@ async function verJogo(id) {
       <input type="number" id="ej-tecnico" value="${j.custo_tecnico}" step="0.5">
     </div>
   </div>
-  <div class="inp"><label>Valor avulsa (R$)</label>
-    <input type="number" id="ej-avulsa" value="${j.valor_avulsa}" step="0.5">
+  <div style="display:flex;gap:8px;">
+    <div class="inp" style="flex:1;"><label>Valor avulsa (R$)</label>
+      <input type="number" id="ej-avulsa" value="${j.valor_avulsa}" step="0.5">
+    </div>
+    <div class="inp" style="flex:1;"><label>Valor experimental (R$)</label>
+      <input type="number" id="ej-experimental" value="${j.valor_experimental||35}" step="0.5">
+    </div>
   </div>
   <div class="inp"><label>Observações</label>
     <input type="text" id="ej-obs" value="${j.observacoes||''}" placeholder="Opcional">
   </div>
 
-  ${atletasParaExibir.length ? `
-  <p class="sec">${isFeriasJogo ? 'Atletas presentes (férias)' : 'Avulsas presentes'}</p>
+  ${isFeriasJogo ? `
+  <p class="sec">Atletas presentes (férias)</p>
   <div style="background:white;border:1px solid #eee;border-radius:14px;padding:4px 14px;margin-bottom:12px;">
     ${atletasParaExibir.map(a=>{
       const checked = presencasPresentes.has(String(a.id));
-      const bg = a.tipo==='avulsa' ? '#FAEEDA' : a.tipo==='experimental' ? '#FEF3C7' : a.tipo==='mensalista' ? '#E6F1FB' : '#f0f0f2';
-      const cor = a.tipo==='avulsa' ? '#854F0B' : a.tipo==='experimental' ? '#92400E' : a.tipo==='mensalista' ? '#1a3f8f' : '#555';
       const eid = String(a.id).replace(/'/g,"\\'");
-      const afastLabel = a.status==='ausente' ? ' · <span style="color:#B07030;">afastada</span>' : '';
-      return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;${a.status==='ausente'?'opacity:0.75;':''}">
-        <div class="av" style="background:${bg};color:${cor};">${ini(a.nome)}</div>
-        <div style="flex:1;">
-          <div style="font-size:14px;">${a.nome}</div>
-          <div style="font-size:11px;color:#bbb;">${a.tipo}${afastLabel}</div>
-        </div>
+      return `<div class="row" onclick="toggleAvulsaEdit('${eid}')" style="cursor:pointer;gap:10px;">
+        <div class="av" style="background:#E6F1FB;color:#1a3f8f;">${ini(a.nome)}</div>
+        <div style="flex:1;font-size:14px;">${a.nome}</div>
         <div class="chk ${checked?'on':''}" id="ej-chk-${String(a.id)}">${checked?'✓':''}</div>
       </div>`;
     }).join('')}
-  </div>` : `<p style="font-size:13px;color:#bbb;margin-bottom:12px;">${isFeriasJogo ? 'Nenhuma atleta.' : 'Nenhuma avulsa neste campeonato.'}</p>`}
-
-  ${!isFeriasJogo && mensalistasDoCamp.length ? `
+  </div>` : `
+  ${mensalistasDoCamp.length ? `
   <div style="margin-bottom:12px;">
     <button onclick="(function(btn){const el=document.getElementById('mensalistas-collapse');const open=el.style.display==='block';el.style.display=open?'none':'block';btn.textContent=open?'👥 Mensalistas (${mensalistasDoCamp.length}) ▾':'👥 Mensalistas (${mensalistasDoCamp.length}) ▴';})(this)"
       style="background:#f0f4fa;border:1.5px solid #d0dff5;color:#185FA5;border-radius:10px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;width:100%;text-align:left;">
@@ -854,10 +852,39 @@ async function verJogo(id) {
       ${mensalistasDoCamp.map(a=>`<div class="row" style="gap:10px;cursor:default;">
         <div class="av" style="background:#E6F1FB;color:#185FA5;">${ini(a.nome)}</div>
         <div style="flex:1;font-size:14px;">${a.nome}</div>
-        <div style="font-size:11px;color:#aaa;">mensalista</div>
+        <div style="font-size:18px;color:#1a3f8f;">✓</div>
       </div>`).join('')}
     </div>
   </div>` : ''}
+
+  <div style="font-size:11px;font-weight:700;color:#854F0B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Avulsas / Convidadas</div>
+  <div style="background:white;border:1.5px solid #f0f0f4;border-radius:14px;padding:4px 14px;margin-bottom:12px;">
+    ${(()=>{
+      const mens = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa').map(a=>String(a.id)));
+      const disp = todasAtl.filter(a => a.status!=='inativa' && !mens.has(String(a.id))).sort((a,b)=>a.nome.localeCompare(b.nome));
+      if (!disp.length) return '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta disponível.</div>';
+      return disp.map(a=>{
+        const insc = (a.inscricoes||[]).find(i=>String(i.campeonato_id)===String(j.campeonato_id));
+        const tipo = insc ? insc.tipo : 'externo';
+        const isAv  = avulsasPresentes.has(String(a.id)) && !window._editExperimentais?.has(String(a.id));
+        const isExp = window._editExperimentaisInit?.has(String(a.id));
+        const bg = isExp?'#FEF3C7':isAv?'#FAEEDA':tipo==='experimental'?'#FEF3C7':tipo==='avulsa'?'#FAEEDA':'#f0f0f2';
+        const cor = isExp?'#92400E':isAv?'#854F0B':tipo==='experimental'?'#92400E':tipo==='avulsa'?'#854F0B':'#555';
+        const inscAtiva = (a.inscricoes||[]).find(i=>i.status==='ativa'||i.status==='ausente');
+        const campOrig = inscAtiva ? (inscAtiva.camp_nome||'') : '';
+        const tipoLabel = tipo==='experimental'?'experimental':tipo==='avulsa'?'avulsa':tipo==='externo'?(campOrig?`convidada · ${campOrig}`:'convidada'):tipo;
+        const eid = String(a.id).replace(/'/g,"\\'");
+        const preChecked = avulsasPresentes.has(String(a.id));
+        const preChkStyle = preChecked ? (isExp?'background:#92400E':'background:#854F0B') : '';
+        return \`<div class="row" onclick="toggleAvulsaEdit('\${eid}')" style="cursor:pointer;gap:10px;">
+          <div class="av" style="background:\${bg};color:\${cor};">\${ini(a.nome)}</div>
+          <div style="flex:1;"><div style="font-size:14px;">\${a.nome}</div>
+            <div style="font-size:11px;color:#999;">\${tipoLabel}</div></div>
+          <div class="chk \${preChecked?'on':''}" id="ej-chk-\${String(a.id)}" style="\${preChkStyle}">\${preChecked?'✓':''}</div>
+        </div>\`;
+      }).join('');
+    })()}
+  </div>`}
 
   <div style="margin-bottom:14px;">
     <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📷 Fotos do jogo</div>
@@ -869,19 +896,20 @@ async function verJogo(id) {
     <div id="ej-foto-status" style="font-size:12px;color:#aaa;margin-top:4px;"></div>
   </div>
 
-  ${!isFeriasJogo ? `
-  <div style="margin-bottom:14px;">
-    <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Convidar atleta (avulsa)</div>
-    <input type="text" id="ej-busca-convite" placeholder="Buscar nome..." oninput="filtrarConvite()"
-      style="width:100%;padding:9px 12px;font-size:14px;border:1.5px solid #e8e8e8;border-radius:10px;background:#fafafa;margin-bottom:6px;">
-    <div id="ej-lista-convite" style="background:white;border:1px solid #eee;border-radius:12px;max-height:180px;overflow-y:auto;padding:4px 14px;display:none;"></div>
-  </div>` : ''}
-
   <button class="btn btn-p" onclick="salvarEdicaoJogo('${j.id}','${j.campeonato_id}',${isFeriasJogo})">💾 Salvar alterações</button>
   <button class="btn" style="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;" onclick="excluirJogo('${j.id}')">🗑️ Excluir jogo</button>`;
 
-  window._editAvulsas = new Set([...presencasPresentes].map(String));
+  // Inicializa Sets: avulsas = todos os presentes que NÃO são experimental; experimentais = os que têm tipo experimental no banco
+  const expIdsInit = new Set((j.avulsas||[])
+    .filter(a => { const insc = atletasDoCamp.find(x=>String(x.id)===String(a.atleta_id||a.id)); return insc && insc.tipo==='experimental'; })
+    .map(a=>String(a.atleta_id||a.id)));
+  window._editExperimentaisInit = expIdsInit;
+  window._editExperimentais = new Set(expIdsInit);
+  window._editAvulsas = new Set([...presencasPresentes].map(String).filter(id => !expIdsInit.has(id)));
   window._editIsFeriasJogo = isFeriasJogo;
+  window._editJogoCampId = j.campeonato_id;
+  window._editTodasAtl = todasAtl;
+  window._editAtletasDoCamp = atletasDoCamp;
   if (!desktop) document.getElementById('modal-bg').style.display='flex';
   setTimeout(() => carregarFotosJogo(j.id), 50);
 }
@@ -975,13 +1003,71 @@ function abrirFotoGrande(id) {
   document.body.appendChild(overlay);
 }
 
+function _atualizarChkEdit(id) {
+  const el = document.getElementById('ej-chk-'+id);
+  if (!el) return;
+  const isAv  = window._editAvulsas?.has(id);
+  const isExp = window._editExperimentais?.has(id);
+  if (isAv)       { el.className='chk on'; el.textContent='✓'; el.style.background='#854F0B'; }
+  else if (isExp) { el.className='chk on'; el.textContent='✓'; el.style.background='#92400E'; }
+  else            { el.className='chk'; el.textContent=''; el.style.background=''; }
+}
+
 function toggleAvulsaEdit(id) {
   id = String(id);
   if (!window._editAvulsas) window._editAvulsas = new Set();
-  if (window._editAvulsas.has(id)) window._editAvulsas.delete(id);
-  else window._editAvulsas.add(id);
-  const el = document.getElementById('ej-chk-'+id);
-  if (el) { el.className='chk'+(window._editAvulsas.has(id)?' on':''); el.textContent=window._editAvulsas.has(id)?'✓':''; }
+  if (!window._editExperimentais) window._editExperimentais = new Set();
+
+  // Se férias: toggle simples
+  if (window._editIsFeriasJogo) {
+    if (window._editAvulsas.has(id)) window._editAvulsas.delete(id);
+    else window._editAvulsas.add(id);
+    _atualizarChkEdit(id);
+    return;
+  }
+
+  // Se já selecionado: desselecionar
+  if (window._editAvulsas.has(id) || window._editExperimentais.has(id)) {
+    window._editAvulsas.delete(id); window._editExperimentais.delete(id);
+    _atualizarChkEdit(id);
+    return;
+  }
+
+  // Picker avulsa / experimental
+  const valAv  = parseFloat(document.getElementById('ej-avulsa')?.value || 55);
+  const valExp = parseFloat(document.getElementById('ej-experimental')?.value || 35);
+  const existing = document.getElementById('picker-avulsa-exp-edit');
+  if (existing) existing.remove();
+  const row = document.getElementById('ej-chk-'+id)?.closest('.row');
+  if (!row) { window._editAvulsas.add(id); _atualizarChkEdit(id); return; }
+
+  const picker = document.createElement('div');
+  picker.id = 'picker-avulsa-exp-edit';
+  picker.style.cssText = 'position:absolute;z-index:999;background:#fff;border:1.5px solid #ddd;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 14px;min-width:220px;';
+  picker.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:10px;">Como vai participar?</div>
+    <button onclick="event.stopPropagation();_escolherTipoEdit('${id}','avulsa');document.getElementById('picker-avulsa-exp-edit').remove();"
+      style="width:100%;margin-bottom:6px;padding:9px 12px;border-radius:9px;border:1.5px solid #FAEEDA;background:#FAEEDA;color:#854F0B;font-weight:700;font-size:13px;cursor:pointer;text-align:left;">
+      Avulsa &nbsp;· ${R(valAv)}
+    </button>
+    <button onclick="event.stopPropagation();_escolherTipoEdit('${id}','experimental');document.getElementById('picker-avulsa-exp-edit').remove();"
+      style="width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid #FEF3C7;background:#FEF3C7;color:#92400E;font-weight:700;font-size:13px;cursor:pointer;text-align:left;">
+      Experimental &nbsp;· ${R(valExp)}
+    </button>`;
+  row.style.position = 'relative';
+  row.appendChild(picker);
+  setTimeout(() => document.addEventListener('click', function _close(e) {
+    const p = document.getElementById('picker-avulsa-exp-edit');
+    if (p && !p.contains(e.target)) { p.remove(); document.removeEventListener('click', _close); }
+  }), 10);
+}
+
+function _escolherTipoEdit(id, tipo) {
+  if (!window._editAvulsas) window._editAvulsas = new Set();
+  if (!window._editExperimentais) window._editExperimentais = new Set();
+  if (tipo === 'experimental') { window._editExperimentais.add(id); window._editAvulsas.delete(id); }
+  else                         { window._editAvulsas.add(id); window._editExperimentais.delete(id); }
+  _atualizarChkEdit(id);
 }
 
 async function salvarEdicaoJogo(jogoId, campId, isFeriasJogo) {
@@ -989,18 +1075,19 @@ async function salvarEdicaoJogo(jogoId, campId, isFeriasJogo) {
   const custo    = parseFloat(document.getElementById('ej-custo').value)||0;
   const tecnico  = parseFloat(document.getElementById('ej-tecnico').value)||0;
   const avulsa   = parseFloat(document.getElementById('ej-avulsa').value)||55;
+  const experimental = parseFloat(document.getElementById('ej-experimental')?.value)||35;
   const obs      = document.getElementById('ej-obs').value;
-  const allSelIds = [...(window._editAvulsas||[])];
-  const expSet = new Set((window._atletasDoCampEdit||[]).filter(a=>a.tipo==='experimental').map(a=>String(a.id)));
-  const avIds  = allSelIds.filter(id => !expSet.has(id));
-  const expIds = allSelIds.filter(id => expSet.has(id));
 
   if (!data) { await vAlert('Informe a data'); return; }
+
+  const avIds  = [...(window._editAvulsas||[])];
+  const expIds = [...(window._editExperimentais||[])];
+  const allSelIds = [...new Set([...avIds, ...expIds])];
 
   const payload = {
     id: jogoId, campeonato_id: campId,
     data_jogo: data, custo_jogo: custo, custo_tecnico: tecnico,
-    valor_avulsa: avulsa, observacoes: obs,
+    valor_avulsa: avulsa, valor_experimental: experimental, observacoes: obs,
     avulsas_ids: isFeriasJogo ? [] : avIds,
     experimentais_ids: isFeriasJogo ? [] : expIds,
     mes_ferias: isFeriasJogo ? 1 : 0,
