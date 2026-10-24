@@ -774,7 +774,7 @@ async function verJogo(id) {
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 
   const avulsasDoCamp = atletasDoCamp.filter(a=>(a.tipo==='avulsa'||a.tipo==='experimental')&&a.status==='ativa');
-  const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&(a.status==='ativa'||a.status==='ausente'));
+  const mensalistasDoCamp = atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa');
   const avulsasPresentes = new Set((j.avulsas||[]).map(a=>String(a.atleta_id||a.id||'')));
 
   const isFeriasJogo = !!(j.mes_ferias);
