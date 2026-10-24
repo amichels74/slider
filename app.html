@@ -872,7 +872,7 @@ async function verJogo(id) {
         const cor = isExp?'#92400E':isAv?'#854F0B':tipo==='experimental'?'#92400E':tipo==='avulsa'?'#854F0B':'#555';
         const inscAtiva = (a.inscricoes||[]).find(i=>i.status==='ativa'||i.status==='ausente');
         const campOrig = inscAtiva ? (inscAtiva.camp_nome||'') : '';
-        const tipoLabel = tipo==='experimental'?'experimental':tipo==='avulsa'?'avulsa':tipo==='externo'?(campOrig?`convidada · ${campOrig}`:'convidada'):tipo;
+        const tipoLabel = tipo==='experimental'?'experimental':tipo==='avulsa'?'avulsa':tipo==='externo'?(campOrig?'convidada · '+campOrig:'convidada'):tipo;
         const eid = String(a.id).replace(/'/g,"\\'");
         const preChecked = avulsasPresentes.has(String(a.id));
         const preChkStyle = preChecked ? (isExp?'background:#92400E':'background:#854F0B') : '';
