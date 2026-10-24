@@ -767,6 +767,30 @@ async function verJogo(id) {
   atletasDoCamp.sort((a,b)=>a.nome.localeCompare(b.nome));
   window._atletasDoCampEdit = atletasDoCamp;
 
+  // Pré-constrói HTML da lista avulsas/convidadas (evita backticks aninhados no template)
+  const _mensIds = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa').map(a=>String(a.id)));
+  const _dispAtl = todasAtl.filter(a => a.status!=='inativa' && !_mensIds.has(String(a.id))).sort((a,b)=>a.nome.localeCompare(b.nome));
+  const avulsasHtmlEdit = _dispAtl.length === 0
+    ? '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta disponível.</div>'
+    : _dispAtl.map(a => {
+        const insc = (a.inscricoes||[]).find(i=>String(i.campeonato_id)===String(j.campeonato_id));
+        const tipo = insc ? insc.tipo : 'externo';
+        const inscAtiva = (a.inscricoes||[]).find(i=>i.status==='ativa'||i.status==='ausente');
+        const campOrig = inscAtiva ? (inscAtiva.camp_nome||'') : '';
+        const tipoLabel = tipo==='experimental'?'experimental':tipo==='avulsa'?'avulsa':tipo==='externo'?(campOrig?'convidada · '+campOrig:'convidada'):tipo;
+        const bg = tipo==='experimental'?'#FEF3C7':tipo==='avulsa'?'#FAEEDA':'#f0f0f2';
+        const cor = tipo==='experimental'?'#92400E':tipo==='avulsa'?'#854F0B':'#555';
+        const aid = String(a.id);
+        const preChecked = avulsasPresentes.has(aid);
+        const eid = aid.replace(/'/g,"\\'");
+        return '<div class="row" onclick="toggleAvulsaEdit(\'' + eid + '\')" style="cursor:pointer;gap:10px;">'
+          + '<div class="av" style="background:' + bg + ';color:' + cor + ';">' + ini(a.nome) + '</div>'
+          + '<div style="flex:1;"><div style="font-size:14px;">' + a.nome + '</div>'
+          + '<div style="font-size:11px;color:#999;">' + tipoLabel + '</div></div>'
+          + '<div class="chk ' + (preChecked?'on':'') + '" id="ej-chk-' + aid + '">' + (preChecked?'✓':'') + '</div>'
+          + '</div>';
+      }).join('');
+
   // Atletas que podem ser convidadas como avulsa: NÃO são mensalistas neste camp
   const mensalistasIds = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista').map(a=>String(a.id)));
   window._todasAtlConvite = todasAtl
@@ -859,31 +883,7 @@ async function verJogo(id) {
 
   <div style="font-size:11px;font-weight:700;color:#854F0B;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Avulsas / Convidadas</div>
   <div style="background:white;border:1.5px solid #f0f0f4;border-radius:14px;padding:4px 14px;margin-bottom:12px;">
-    ${(()=>{
-      const mens = new Set(atletasDoCamp.filter(a=>a.tipo==='mensalista'&&a.status==='ativa').map(a=>String(a.id)));
-      const disp = todasAtl.filter(a => a.status!=='inativa' && !mens.has(String(a.id))).sort((a,b)=>a.nome.localeCompare(b.nome));
-      if (!disp.length) return '<div style="padding:14px;font-size:13px;color:#bbb;">Nenhuma atleta disponível.</div>';
-      return disp.map(a=>{
-        const insc = (a.inscricoes||[]).find(i=>String(i.campeonato_id)===String(j.campeonato_id));
-        const tipo = insc ? insc.tipo : 'externo';
-        const isAv  = avulsasPresentes.has(String(a.id)) && !window._editExperimentais?.has(String(a.id));
-        const isExp = window._editExperimentaisInit?.has(String(a.id));
-        const bg = isExp?'#FEF3C7':isAv?'#FAEEDA':tipo==='experimental'?'#FEF3C7':tipo==='avulsa'?'#FAEEDA':'#f0f0f2';
-        const cor = isExp?'#92400E':isAv?'#854F0B':tipo==='experimental'?'#92400E':tipo==='avulsa'?'#854F0B':'#555';
-        const inscAtiva = (a.inscricoes||[]).find(i=>i.status==='ativa'||i.status==='ausente');
-        const campOrig = inscAtiva ? (inscAtiva.camp_nome||'') : '';
-        const tipoLabel = tipo==='experimental'?'experimental':tipo==='avulsa'?'avulsa':tipo==='externo'?(campOrig?'convidada · '+campOrig:'convidada'):tipo;
-        const eid = String(a.id).replace(/'/g,"\\'");
-        const preChecked = avulsasPresentes.has(String(a.id));
-        const preChkStyle = preChecked ? (isExp?'background:#92400E':'background:#854F0B') : '';
-        return \`<div class="row" onclick="toggleAvulsaEdit('\${eid}')" style="cursor:pointer;gap:10px;">
-          <div class="av" style="background:\${bg};color:\${cor};">\${ini(a.nome)}</div>
-          <div style="flex:1;"><div style="font-size:14px;">\${a.nome}</div>
-            <div style="font-size:11px;color:#999;">\${tipoLabel}</div></div>
-          <div class="chk \${preChecked?'on':''}" id="ej-chk-\${String(a.id)}" style="\${preChkStyle}">\${preChecked?'✓':''}</div>
-        </div>\`;
-      }).join('');
-    })()}
+    ${avulsasHtmlEdit}
   </div>`}
 
   <div style="margin-bottom:14px;">
