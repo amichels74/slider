@@ -729,6 +729,9 @@ async function carregarListaJogos() {
     const custo = parseFloat(j.custo_jogo||0) + parseFloat(j.custo_tecnico||0);
     const isFer = !!(j.mes_ferias);
     const nPres = isFer ? (j.presencas ? j.presencas.length : 0) : (j.avulsas ? j.avulsas.length : 0);
+    const nExp = !isFer ? (j.avulsas||[]).filter(a=>a.tipo==='experimental').length : 0;
+    const nAv = nPres - nExp;
+    const labelPres = isFer ? nPres+' presente(s)' : (nExp>0 ? (nAv>0?nAv+' avulsa(s) · ':'') + nExp+' exp.' : nPres+' avulsa(s)');
     return `<div class="card" style="padding:12px 14px;cursor:pointer;" onclick="verJogo('${j.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
@@ -740,7 +743,7 @@ async function carregarListaJogos() {
         </div>
         <div style="text-align:right;">
           <div style="font-size:14px;font-weight:600;">${R(custo)}</div>
-          <div style="font-size:11px;color:#aaa;">${isFer ? nPres+' presente(s)' : nPres+' avulsa(s)'}</div>
+          <div style="font-size:11px;color:#aaa;">${labelPres}</div>
         </div>
       </div>
       ${j.observacoes?`<div style="font-size:12px;color:#aaa;margin-top:6px;">📝 ${j.observacoes}</div>`:''}
@@ -783,13 +786,18 @@ async function verJogo(id) {
         const bg = tipo==='experimental'?'#FEF3C7':tipo==='avulsa'?'#FAEEDA':'#f0f0f2';
         const cor = tipo==='experimental'?'#92400E':tipo==='avulsa'?'#854F0B':'#555';
         const aid = String(a.id);
-        const preChecked = avulsasPresentes.has(aid);
+        const partEntry = (j.avulsas||[]).find(x=>String(x.atleta_id||x.id)===aid);
+        const partTipo = partEntry ? partEntry.tipo : null;
+        const isExp = partTipo==='experimental';
+        const isAv  = partTipo==='avulsa';
+        const chkBg = isExp?'#92400E':isAv?'#854F0B':'';
+        const chkClass = (isExp||isAv)?'chk on':'chk';
         const eid = aid.replace(/'/g,"\\'");
         return '<div class="row" onclick="toggleAvulsaEdit(\'' + eid + '\')" style="cursor:pointer;gap:10px;">'
           + '<div class="av" style="background:' + bg + ';color:' + cor + ';">' + ini(a.nome) + '</div>'
           + '<div style="flex:1;"><div style="font-size:14px;">' + a.nome + '</div>'
           + '<div style="font-size:11px;color:#999;">' + tipoLabel + '</div></div>'
-          + '<div class="chk ' + (preChecked?'on':'') + '" id="ej-chk-' + aid + '">' + (preChecked?'✓':'') + '</div>'
+          + '<div class="' + chkClass + '" id="ej-chk-' + aid + '" style="' + (chkBg?'background:'+chkBg+';':'') + '">' + ((isExp||isAv)?'✓':'') + '</div>'
           + '</div>';
       }).join('');
 
@@ -900,13 +908,12 @@ async function verJogo(id) {
   <button class="btn btn-p" onclick="salvarEdicaoJogo('${j.id}','${j.campeonato_id}',${isFeriasJogo})">💾 Salvar alterações</button>
   <button class="btn" style="width:100%;margin-top:8px;color:#A32D2D;border-color:#A32D2D;" onclick="excluirJogo('${j.id}')">🗑️ Excluir jogo</button>`;
 
-  // Inicializa Sets: avulsas = todos os presentes que NÃO são experimental; experimentais = os que têm tipo experimental no banco
-  const expIdsInit = new Set((j.avulsas||[])
-    .filter(a => { const insc = atletasDoCamp.find(x=>String(x.id)===String(a.atleta_id||a.id)); return insc && insc.tipo==='experimental'; })
-    .map(a=>String(a.atleta_id||a.id)));
+  // Inicializa Sets usando p.tipo da participação (retornado pela API)
+  const expIdsInit = new Set((j.avulsas||[]).filter(a=>a.tipo==='experimental').map(a=>String(a.atleta_id||a.id)));
+  const avIdsInit  = new Set((j.avulsas||[]).filter(a=>a.tipo==='avulsa').map(a=>String(a.atleta_id||a.id)));
   window._editExperimentaisInit = expIdsInit;
   window._editExperimentais = new Set(expIdsInit);
-  window._editAvulsas = new Set([...presencasPresentes].map(String).filter(id => !expIdsInit.has(id)));
+  window._editAvulsas = new Set(avIdsInit);
   window._editIsFeriasJogo = isFeriasJogo;
   window._editJogoCampId = j.campeonato_id;
   window._editTodasAtl = todasAtl;

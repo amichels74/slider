@@ -47,7 +47,7 @@ if ($method === 'GET') {
             $j['avulsas']   = [];
         } else {
             $s = $db->prepare("
-                SELECT p.id, p.atleta_id, a.nome, p.valor
+                SELECT p.id, p.atleta_id, a.nome, p.valor, p.tipo
                 FROM participacoes p JOIN atletas a ON a.id = p.atleta_id
                 WHERE p.jogo_id = ? AND p.tipo IN ('avulsa','experimental') ORDER BY a.nome
             ");
