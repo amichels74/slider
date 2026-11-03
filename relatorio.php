@@ -201,6 +201,19 @@ foreach ($camps as $camp) {
         'ferias'          => $ferias,
         'total_pend'      => $totalPend,
         'total_pago'      => $totalPago,
+        'fotos_jogos'     => (function() use ($db, $todosJogos) {
+            $fotos = [];
+            foreach ($todosJogos as $jg) {
+                $sf = $db->prepare("SELECT id, mime, dados FROM fotos_jogos WHERE jogo_id = ? ORDER BY criado_em LIMIT 1");
+                $sf->execute([$jg['id']]);
+                $f = $sf->fetch(PDO::FETCH_ASSOC);
+                if ($f) $fotos[] = [
+                    'data_jogo' => $jg['data_jogo'],
+                    'img'       => 'data:' . $f['mime'] . ';base64,' . base64_encode($f['dados']),
+                ];
+            }
+            return $fotos;
+        })(),
     ];
 }
 
@@ -319,6 +332,20 @@ tr:last-child td { border-bottom: none; }
         </tr>
         <?php endforeach; ?>
     </table>
+    <?php endif; ?>
+
+    <?php if (!empty($c['fotos_jogos'])): ?>
+    <div style="margin-top:16px;">
+        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📸 Fotos dos jogos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <?php foreach ($c['fotos_jogos'] as $fj): ?>
+            <div style="text-align:center;">
+                <img src="<?= $fj['img'] ?>" style="width:160px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;display:block;">
+                <div style="font-size:10px;color:#aaa;margin-top:3px;"><?= date('d/m', strtotime($fj['data_jogo'])) ?></div>
+            </div>
+        <?php endforeach; ?>
+        </div>
+    </div>
     <?php endif; ?>
 
     <div class="camp-resumo">

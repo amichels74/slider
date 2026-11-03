@@ -732,6 +732,7 @@ async function carregarListaJogos() {
     const nExp = !isFer ? (j.avulsas||[]).filter(a=>a.tipo==='experimental').length : 0;
     const nAv = nPres - nExp;
     const labelPres = isFer ? nPres+' presente(s)' : (nExp>0 ? (nAv>0?nAv+' avulsa(s) · ':'') + nExp+' exp.' : nPres+' avulsa(s)');
+    const temFoto = parseInt(j.foto_count||0) > 0;
     return `<div class="card" style="padding:12px 14px;cursor:pointer;" onclick="verJogo('${j.id}')">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
@@ -743,7 +744,7 @@ async function carregarListaJogos() {
         </div>
         <div style="text-align:right;">
           <div style="font-size:14px;font-weight:600;">${R(custo)}</div>
-          <div style="font-size:11px;color:#aaa;">${labelPres}</div>
+          <div style="font-size:11px;color:#aaa;">${labelPres}${temFoto?' · 📎':''}</div>
         </div>
       </div>
       ${j.observacoes?`<div style="font-size:12px;color:#aaa;margin-top:6px;">📝 ${j.observacoes}</div>`:''}
@@ -1070,10 +1071,13 @@ function toggleAvulsaEdit(id) {
       Experimental &nbsp;· ${R(valExp)}
     </button>`;
   document.body.appendChild(picker);
-  setTimeout(() => document.addEventListener('click', function _close(e) {
+  if (window._pickerCloseEdit) document.removeEventListener('click', window._pickerCloseEdit);
+  window._pickerCloseEdit = function(e) {
     const p = document.getElementById('picker-avulsa-exp-edit');
-    if (p && !p.contains(e.target)) { p.remove(); document.removeEventListener('click', _close); }
-  }), 10);
+    if (!p) { document.removeEventListener('click', window._pickerCloseEdit); return; }
+    if (!p.contains(e.target)) { p.remove(); document.removeEventListener('click', window._pickerCloseEdit); }
+  };
+  setTimeout(() => document.addEventListener('click', window._pickerCloseEdit), 10);
 }
 
 function _escolherTipoEdit(id, tipo) {
@@ -1343,10 +1347,13 @@ function toggleAvulsa(id) {
     </button>`;
 
   document.body.appendChild(picker);
-  setTimeout(() => document.addEventListener('click', function _close(e) {
+  if (window._pickerCloseNew) document.removeEventListener('click', window._pickerCloseNew);
+  window._pickerCloseNew = function(e) {
     const p = document.getElementById('picker-avulsa-exp');
-    if (p && !p.contains(e.target)) { p.remove(); document.removeEventListener('click', _close); }
-  }), 10);
+    if (!p) { document.removeEventListener('click', window._pickerCloseNew); return; }
+    if (!p.contains(e.target)) { p.remove(); document.removeEventListener('click', window._pickerCloseNew); }
+  };
+  setTimeout(() => document.addEventListener('click', window._pickerCloseNew), 10);
 }
 
 function _escolherTipoPartic(id, tipo) {

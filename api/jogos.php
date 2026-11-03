@@ -25,7 +25,9 @@ if ($method === 'GET') {
                COALESCE(j.valor_experimental, 35) AS valor_experimental,
                j.observacoes,
                (j.custo_jogo + j.custo_tecnico) AS custo_total,
-               COALESCE(j.mes_ferias, 0) AS mes_ferias
+               COALESCE(j.mes_ferias, 0) AS mes_ferias,
+               (SELECT COUNT(*) FROM fotos_jogos fg WHERE fg.jogo_id = j.id) AS foto_count,
+               (SELECT fg2.id FROM fotos_jogos fg2 WHERE fg2.jogo_id = j.id ORDER BY fg2.criado_em LIMIT 1) AS primeira_foto_id
         FROM jogos j
         JOIN campeonatos c ON c.id = j.campeonato_id
         $where
