@@ -338,20 +338,6 @@ tr:last-child td { border-bottom: none; }
     </table>
     <?php endif; ?>
 
-    <?php if (!empty($c['fotos_jogos'])): ?>
-    <div style="margin-top:16px;">
-        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📸 Fotos dos jogos</div>
-        <div style="display:flex;flex-wrap:wrap;gap:10px;">
-        <?php foreach ($c['fotos_jogos'] as $fj): ?>
-            <div style="text-align:center;">
-                <img src="<?= $fj['img'] ?>" style="width:160px;height:120px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;display:block;">
-                <div style="font-size:10px;color:#aaa;margin-top:3px;"><?= date('d/m', strtotime($fj['data_jogo'])) ?></div>
-            </div>
-        <?php endforeach; ?>
-        </div>
-    </div>
-    <?php endif; ?>
-
     <div class="camp-resumo">
         <div class="cr-box cr-pend">
             <div class="lbl">Pendente</div>
@@ -362,6 +348,20 @@ tr:last-child td { border-bottom: none; }
             <div class="val" style="color:#3B6D11;"><?= R($c['total_pago']) ?></div>
         </div>
     </div>
+
+    <?php if (!empty($c['fotos_jogos'])): ?>
+    <div style="margin-top:16px;padding-top:14px;border-top:1px solid #f0f0f0;">
+        <div style="font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📸 Fotos dos jogos</div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;">
+        <?php foreach ($c['fotos_jogos'] as $fj): ?>
+            <div style="text-align:center;cursor:pointer;" onclick="abrirFoto(this.querySelector('img').src)">
+                <img src="<?= $fj['img'] ?>" style="width:320px;height:240px;object-fit:cover;border-radius:10px;border:1px solid #e5e7eb;display:block;transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                <div style="font-size:11px;color:#aaa;margin-top:4px;"><?= date('d/m', strtotime($fj['data_jogo'])) ?></div>
+            </div>
+        <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
 </div>
 <?php endforeach; ?>
 
@@ -381,5 +381,15 @@ tr:last-child td { border-bottom: none; }
     <span>Gerado em <?= date('d/m/Y H:i') ?></span>
 </div>
 
+<div id="lightbox" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;cursor:pointer;align-items:center;justify-content:center;">
+  <img id="lightbox-img" style="max-width:92vw;max-height:92vh;border-radius:12px;box-shadow:0 8px 40px rgba(0,0,0,.6);object-fit:contain;">
+</div>
+<script>
+function abrirFoto(src) {
+  var lb = document.getElementById('lightbox');
+  document.getElementById('lightbox-img').src = src;
+  lb.style.display = 'flex';
+}
+</script>
 </body>
 </html>
