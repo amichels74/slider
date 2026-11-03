@@ -84,9 +84,13 @@ foreach ($camps as $camp) {
                 if ($jogosForaAusencia > 0 && $totalJogos > 0)
                     $parciais[] = ['id' => $a['id'], 'nome' => $a['nome'], 'fracao' => $jogosForaAusencia / $totalJogos, 'tipo_label' => 'Mensalista'];
             } else {
-                $jogosAntes = $desde ? count(array_filter($jogos, fn($j) => $j['data_jogo'] < $desde)) : 0;
+                // Só inclui proporcional se ficou inativa/ausente NESTE mês
+                $mesInicio = $filtMes . '-01';
+                $mesFim    = date('Y-m-t', strtotime($mesInicio));
+                $dentroDoMes = $desde && $desde >= $mesInicio && $desde <= $mesFim;
+                $jogosAntes = ($dentroDoMes && $desde) ? count(array_filter($jogos, fn($j) => $j['data_jogo'] < $desde)) : 0;
                 if ($jogosAntes > 0) {
-                    $fracao = $a['status'] === 'inativa' ? 1.0 : ($totalJogos > 0 ? $jogosAntes / $totalJogos : 0);
+                    $fracao = $totalJogos > 0 ? $jogosAntes / $totalJogos : 0;
                     $parciais[] = ['id' => $a['id'], 'nome' => $a['nome'], 'fracao' => $fracao, 'tipo_label' => 'Mensalista'];
                 }
             }
