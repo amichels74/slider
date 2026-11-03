@@ -1843,13 +1843,13 @@ function abrirGerenciar(id) {
       </div>
 
       <!-- Resumo do afastamento atual/último (somente leitura + edição) -->
-      ${(ins.status==='ausente'||temRetorno)?`
-      <div id="afas-resumo-${idx}" style="background:${temRetorno?'#EAF3DE':'#FFF8E6'};border-radius:8px;padding:10px 12px;margin-top:4px;">
+      ${(ins.status==='ausente'||ins.status==='inativa'||temRetorno)?`
+      <div id="afas-resumo-${idx}" style="background:${temRetorno?'#EAF3DE':ins.status==='inativa'?'#FFF0F0':'#FFF8E6'};border-radius:8px;padding:10px 12px;margin-top:4px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <div style="font-size:11px;font-weight:600;color:${temRetorno?'#3B6D11':'#854F0B'};">
-            ${temRetorno?'↩️ Último afastamento':'⚠️ Afastamento atual'}
+          <div style="font-size:11px;font-weight:600;color:${temRetorno?'#3B6D11':ins.status==='inativa'?'#A32D2D':'#854F0B'};">
+            ${temRetorno?'↩️ Último afastamento':ins.status==='inativa'?'❌ Saiu do grupo':'⚠️ Afastamento atual'}
           </div>
-          <button onclick="toggleEditAfastamento(${idx})" style="font-size:11px;color:#378ADD;background:none;border:none;cursor:pointer;padding:2px 6px;">✏️ Editar</button>
+          <button onclick="toggleEditAfastamento(${idx})" style="font-size:11px;color:#378ADD;background:none;border:none;cursor:pointer;padding:2px 6px;">✏️ Editar datas</button>
         </div>
         <!-- Visualização -->
         <div id="afas-view-${idx}" style="display:flex;gap:16px;font-size:13px;flex-wrap:wrap;">
