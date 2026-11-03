@@ -82,12 +82,12 @@ foreach ($camps as $camp) {
                     return (!$desde || $j['data_jogo'] < $desde) || $j['data_jogo'] >= $retorno;
                 }));
                 if ($jogosForaAusencia > 0 && $totalJogos > 0)
-                    $parciais[] = ['id' => $a['id'], 'nome' => $a['nome'], 'fracao' => $jogosForaAusencia / $totalJogos, 'tipo_label' => 'Mensalista (retorno)'];
+                    $parciais[] = ['id' => $a['id'], 'nome' => $a['nome'], 'fracao' => $jogosForaAusencia / $totalJogos, 'tipo_label' => 'Mensalista'];
             } else {
                 $jogosAntes = $desde ? count(array_filter($jogos, fn($j) => $j['data_jogo'] < $desde)) : 0;
                 if ($jogosAntes > 0) {
                     $fracao = $a['status'] === 'inativa' ? 1.0 : ($totalJogos > 0 ? $jogosAntes / $totalJogos : 0);
-                    $parciais[] = ['id' => $a['id'], 'nome' => $a['nome'], 'fracao' => $fracao, 'tipo_label' => 'Mensalista (prop.)'];
+                    $parciais[] = ['id' => $a['id'], 'nome' => $a['nome'], 'fracao' => $fracao, 'tipo_label' => 'Mensalista'];
                 }
             }
         }
