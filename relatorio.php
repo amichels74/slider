@@ -270,6 +270,7 @@ tr:last-child td { border-bottom: none; }
 <body>
 
 <button class="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button>
+<button class="btn-print" onclick="baixarHTML()" style="background:#1D9E75;margin-left:8px;">⬇️ Baixar como HTML</button>
 
 <div class="header">
     <h1>🏐 Vôlei Master — Relatório de Cobranças</h1>
@@ -389,6 +390,21 @@ function abrirFoto(src) {
   var lb = document.getElementById('lightbox');
   document.getElementById('lightbox-img').src = src;
   lb.style.display = 'flex';
+}
+function baixarHTML() {
+  // Clona o documento e remove os botões para o arquivo final
+  var clone = document.documentElement.cloneNode(true);
+  clone.querySelectorAll('.btn-print').forEach(function(b){ b.remove(); });
+  // Remove o lightbox (será recriado pelo script inline)
+  var lb = clone.querySelector('#lightbox');
+  if (lb) lb.remove();
+  var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+  var blob = new Blob([html], {type: 'text/html;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'relatorio-volei-<?= $filtMes ?>.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 </script>
 </body>
