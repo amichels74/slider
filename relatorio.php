@@ -22,11 +22,7 @@ function fmtMes($m) {
 }
 
 function R($n) {
-    $v = round(floatval($n), 3);
-    if (fmod($v * 1000, 10) != 0) {
-        return 'R$ ' . number_format($v, 3, ',', '.');
-    }
-    return 'R$ ' . number_format($v, 2, ',', '.');
+    return 'R$ ' . number_format(round(floatval($n), 2), 2, ',', '.');
 }
 
 $camps = $db->query("SELECT id, nome FROM campeonatos WHERE ativo=1 ORDER BY nome")->fetchAll();
