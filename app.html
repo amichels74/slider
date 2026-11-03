@@ -1055,9 +1055,10 @@ function toggleAvulsaEdit(id) {
   const row = document.getElementById('ej-chk-'+id)?.closest('.row');
   if (!row) { window._editAvulsas.add(id); _atualizarChkEdit(id); return; }
 
+  const rect = (document.getElementById('ej-chk-'+id) || row).getBoundingClientRect();
   const picker = document.createElement('div');
   picker.id = 'picker-avulsa-exp-edit';
-  picker.style.cssText = 'position:absolute;z-index:999;background:#fff;border:1.5px solid #ddd;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 14px;min-width:220px;';
+  picker.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1.5px solid #ddd;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:12px 14px;min-width:220px;top:'+(rect.bottom+4)+'px;left:'+Math.max(4,rect.right-224)+'px;';
   picker.innerHTML = `
     <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:10px;">Como vai participar?</div>
     <button onclick="event.stopPropagation();_escolherTipoEdit('${id}','avulsa');document.getElementById('picker-avulsa-exp-edit').remove();"
@@ -1068,8 +1069,7 @@ function toggleAvulsaEdit(id) {
       style="width:100%;padding:9px 12px;border-radius:9px;border:1.5px solid #FEF3C7;background:#FEF3C7;color:#92400E;font-weight:700;font-size:13px;cursor:pointer;text-align:left;">
       Experimental &nbsp;· ${R(valExp)}
     </button>`;
-  row.style.position = 'relative';
-  row.appendChild(picker);
+  document.body.appendChild(picker);
   setTimeout(() => document.addEventListener('click', function _close(e) {
     const p = document.getElementById('picker-avulsa-exp-edit');
     if (p && !p.contains(e.target)) { p.remove(); document.removeEventListener('click', _close); }
@@ -1327,9 +1327,10 @@ function toggleAvulsa(id) {
   const row = document.getElementById('chk-'+id)?.closest('.row');
   if (!row) { selAvulsas.add(id); _atualizarChkAvulsa(id); return; }
 
+  const rect2 = (document.getElementById('chk-'+id) || row).getBoundingClientRect();
   const picker = document.createElement('div');
   picker.id = 'picker-avulsa-exp';
-  picker.style.cssText = 'position:absolute;z-index:999;background:#fff;border:1.5px solid #ddd;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.15);padding:12px 14px;min-width:220px;';
+  picker.style.cssText = 'position:fixed;z-index:9999;background:#fff;border:1.5px solid #ddd;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.2);padding:12px 14px;min-width:220px;top:'+(rect2.bottom+4)+'px;left:'+Math.max(4,rect2.right-224)+'px;';
   picker.innerHTML = `
     <div style="font-size:12px;font-weight:700;color:#555;margin-bottom:10px;">Como vai participar?</div>
     <button onclick="event.stopPropagation();_escolherTipoPartic('${id}','avulsa');document.getElementById('picker-avulsa-exp').remove();"
@@ -1341,10 +1342,7 @@ function toggleAvulsa(id) {
       Experimental &nbsp;· ${R(valExp)}
     </button>`;
 
-  // Posiciona abaixo do row
-  row.style.position = 'relative';
-  row.appendChild(picker);
-  // Fecha ao clicar fora
+  document.body.appendChild(picker);
   setTimeout(() => document.addEventListener('click', function _close(e) {
     const p = document.getElementById('picker-avulsa-exp');
     if (p && !p.contains(e.target)) { p.remove(); document.removeEventListener('click', _close); }
