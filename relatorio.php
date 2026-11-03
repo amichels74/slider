@@ -48,8 +48,8 @@ foreach ($camps as $camp) {
     // Custo e receita apenas de jogos normais
     $custoTotal = array_sum(array_map(fn($j) => $j['custo_jogo'] + $j['custo_tecnico'], $jogos));
 
-    // Receita de avulsas — apenas tipo='avulsa' (exclui férias)
-    $stmtRec = $db->prepare("SELECT COALESCE(SUM(p.valor),0) FROM participacoes p JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo='avulsa'");
+    // Receita de avulsas + experimentais (exclui férias)
+    $stmtRec = $db->prepare("SELECT COALESCE(SUM(p.valor),0) FROM participacoes p JOIN jogos j ON j.id=p.jogo_id WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo IN ('avulsa','experimental')");
     $stmtRec->execute([$cId, $filtMes]);
     $recAvulsas = floatval($stmtRec->fetchColumn());
 
@@ -124,19 +124,20 @@ foreach ($camps as $camp) {
         foreach ($stmtPag->fetchAll() as $p) $pagoMap[$p['atleta_id']] = $p;
     }
 
-    // Avulsas — apenas tipo='avulsa', valor > 0
+    // Avulsas + Experimentais — valor > 0
     $stmtAv = $db->prepare("
-        SELECT a.id, a.nome, SUM(p.valor) as total
+        SELECT a.id, a.nome, SUM(p.valor) as total, p.tipo
         FROM participacoes p JOIN atletas a ON a.id=p.atleta_id JOIN jogos j ON j.id=p.jogo_id
-        WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo='avulsa'
-        GROUP BY a.id, a.nome ORDER BY a.nome
+        WHERE j.campeonato_id=? AND j.mes_referencia=? AND p.tipo IN ('avulsa','experimental')
+        GROUP BY a.id, a.nome, p.tipo ORDER BY a.nome
     ");
     $stmtAv->execute([$cId, $filtMes]);
     $avulsas = [];
     foreach ($stmtAv->fetchAll() as $a) {
         if (floatval($a['total']) <= 0) continue;
         $pago = isset($pagoMap[$a['id']]) && $pagoMap[$a['id']]['pago'];
-        $avulsas[] = ['nome' => $a['nome'], 'total' => $a['total'], 'pago' => $pago];
+        $tipoLabel = $a['tipo'] === 'experimental' ? 'Experimental' : 'Avulsa';
+        $avulsas[] = ['nome' => $a['nome'], 'total' => $a['total'], 'pago' => $pago, 'tipo' => $tipoLabel];
     }
 
     // Cobranças de férias — avulsas pagam valor_avulsa, restante divide entre os demais
@@ -290,7 +291,7 @@ tr:last-child td { border-bottom: none; }
         <?= $c['n_participantes'] ?> participante<?= $c['n_participantes'] != 1 ? 's' : '' ?> &nbsp;·&nbsp;
         <?= $c['jogos'] ?> jogo(s) &nbsp;·&nbsp;
         Custo: <?= R($c['custo']) ?>
-        <?php if ($c['avulsas_rec'] > 0): ?> &nbsp;·&nbsp; Avulsas: -<?= R($c['avulsas_rec']) ?><?php endif; ?>
+        <?php if ($c['avulsas_rec'] > 0): ?> &nbsp;·&nbsp; Avulsas/Exp.: -<?= R($c['avulsas_rec']) ?><?php endif; ?>
         &nbsp;·&nbsp; Cota: <?= R($c['cota']) ?> por participante
     </div>
     <?php endif; ?>
@@ -315,7 +316,7 @@ tr:last-child td { border-bottom: none; }
         <?php foreach ($c['avulsas'] as $a): ?>
         <tr>
             <td><?= htmlspecialchars($a['nome']) ?></td>
-            <td>Avulsa</td>
+            <td><?= $a['tipo'] ?? 'Avulsa' ?></td>
             <td><?= R($a['total']) ?></td>
             <td class="<?= $a['pago'] ? 'pago' : 'pendente' ?>"><?= $a['pago'] ? '✅ Pago' : '❌ Pendente' ?></td>
         </tr>
